@@ -1,4 +1,4 @@
-﻿Build started 6/3/2014 4:37:19 AM.
+﻿Build started 6/3/2014 4:47:28 AM.
      1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\Local - Copy\itemmap\itemmap.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "itemmap\\itemmap.unsuccessfulbuild" because "AlwaysCreate" was specified.
@@ -26,4 +26,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.07
+Time Elapsed 00:00:02.09
