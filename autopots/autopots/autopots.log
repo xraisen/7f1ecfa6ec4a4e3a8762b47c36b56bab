@@ -1,0 +1,30 @@
+﻿Build started 6/3/2014 12:17:33 AM.
+     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\Local\autopots\autopots.vcxproj" on node 3 (build target(s)).
+     1>InitializeBuildStatus:
+         Touching "autopots\\autopots.unsuccessfulbuild".
+       ClCompile:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\src\common /I..\3rdparty\msinttypes\include /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D _WINDLL /D _MBCS /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"autopots\\" /Fd"autopots\\vc100.pdb" /Gd /TC /analyze- /errorReport:prompt ..\src\plugins\autopots.c
+         autopots.c
+     1>..\src\plugins\autopots.c(120): error C2065: 'timer' : undeclared identifier
+     1>..\src\plugins\autopots.c(120): error C2223: left of '->add' must point to struct/union
+     1>..\src\plugins\autopots.c(120): error C2065: 'timer' : undeclared identifier
+     1>..\src\plugins\autopots.c(120): error C2223: left of '->gettick' must point to struct/union
+     1>..\src\plugins\autopots.c(172): error C2065: 'timer' : undeclared identifier
+     1>..\src\plugins\autopots.c(172): error C2223: left of '->add' must point to struct/union
+     1>..\src\plugins\autopots.c(172): error C2065: 'timer' : undeclared identifier
+     1>..\src\plugins\autopots.c(172): error C2223: left of '->gettick' must point to struct/union
+     1>..\src\plugins\autopots.c(214): error C2065: 'timer' : undeclared identifier
+     1>..\src\plugins\autopots.c(214): error C2223: left of '->add' must point to struct/union
+     1>..\src\plugins\autopots.c(214): error C2065: 'timer' : undeclared identifier
+     1>..\src\plugins\autopots.c(214): error C2223: left of '->gettick' must point to struct/union
+     1>..\src\plugins\autopots.c(256): error C2065: 'timer' : undeclared identifier
+     1>..\src\plugins\autopots.c(256): error C2223: left of '->add' must point to struct/union
+     1>..\src\plugins\autopots.c(256): error C2065: 'timer' : undeclared identifier
+     1>..\src\plugins\autopots.c(256): error C2223: left of '->gettick' must point to struct/union
+     1>..\src\plugins\autopots.c(270): error C2065: 'timer' : undeclared identifier
+     1>..\src\plugins\autopots.c(270): warning C4047: '=' : 'int' differs in levels of indirection from 'void *'
+     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\Local\autopots\autopots.vcxproj" (build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:01.61

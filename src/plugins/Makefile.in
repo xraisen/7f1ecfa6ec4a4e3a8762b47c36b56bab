@@ -1,8 +1,6 @@
 # Copyright (c) Hercules Dev Team, licensed under GNU GPL.
 # See the LICENSE file
 
-# @configure_input@
-
 ################  PLUGIN CONFIGURATION  ##############################
 #                                                                    #
 # When you add a plugin, add its name here:                          #
@@ -18,7 +16,7 @@
 #                                                                    #
 # Note: DO NOT include the .c extension!!!                           #
 
-MYPLUGINS = 
+MYPLUGINS = identifyall autobuyammo autoattack identifyall manners storeit whosell afk
 
 #                                                                    #
 #########  DO NOT EDIT ANYTHING BELOW THIS LINE!!!  ##################

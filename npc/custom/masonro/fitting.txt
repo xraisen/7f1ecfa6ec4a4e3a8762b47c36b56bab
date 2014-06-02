@@ -1,0 +1,163 @@
+//============================================================
+//= Preview Item Script
+//===== By: ==================================================
+//= iHeart
+//===== Current Version: =====================================
+//= 1.01
+//===== Description: =========================================
+//= A method to allow headgear sprites to be previewed without
+//= being 'stolen'
+//===== Changelog: ===========================================
+//= 1.01
+//=   -Modified so it dynamically gets npc name for the timer
+//= 1.00 
+//=   -Initial Release
+//============================================================
+
+prontera,167,198,5	script	Fitting NPC	838,{
+
+    //save current look for later
+    set @bottomview, getlook(3);
+    set @topview, getlook(4);
+    set @midview, getlook(5);
+
+    //doesn't actually execute until just before a 'close' statement, or when the char leaves the npc's control
+    addtimer 10000, strnpcinfo(3)+"::On_Leave";
+
+INTRO:
+
+    mes "Welcome to the preview NPC";
+    mes "Please select an item you would like to preview:";
+	
+	switch(select("Upper Headgear:Middle Headgear:Lower Headgear:Quit")) {
+		case 1:	goto L_UpH;
+		case 2:	goto L_MidH;
+		case 3:	goto L_LowH;
+		default: close;
+	}
+	L_UpH:
+	switch(select("Valkyrie Helm White:Randgris:XboX Live Headset:Stellar Death Butterfly:Drooping Amistr Hat:Blue Piamette:Nekoring Hat:Sapling Hat:Twin Bunnies:Evil Angel Helm:Shadow Angel Helm:Baal Helm Red:Cygnus Helm:Elemental Helm:Helm Spirituous:Quit")) {
+		case 1: set @itemID, 23316; break;
+		case 2: set @itemID, 23211; break;
+		case 3: set @itemID, 23318; break;
+		case 4: set @itemID, 23300; break;
+		case 5: set @itemID, 23133; break;
+		case 6: set @itemID, 23094; break;
+		case 7: set @itemID, 23194; break;
+		case 8: set @itemID, 23213; break;
+		case 9: set @itemID, 23225; break;
+		case 10: set @itemID, 23229; break;
+		case 11: set @itemID, 23230; break;
+		case 12: set @itemID, 23237; break;
+		case 13: set @itemID, 23239; break;
+		case 14: set @itemID, 23241; break;
+		case 15: set @itemID, 23247; break;
+		default: close;    
+	}
+	goto L_Equip;
+	close;
+	
+	L_MidH:
+	switch(select("Wings of Death:Demon Wings:White Butterfly Wings:Judgement Wings:White Mini Butterfly Wings:Pink Butterfly Wings:Pink Oracle Wings:Purified Wings:Purple Death Wings:Red Demon Wings:Yellow Oracle Wings:Ocean Spirit Wings:Scarlet Angel Wings:Ice Dragon:Papiliomacilentus:^0000FFNEXT^000000:Quit")) {
+		case 1: set @itemID, 23005; break;
+		case 2: set @itemID, 23002; break;
+		case 3: set @itemID, 23017; break;
+		case 4: set @itemID, 23026; break;
+		case 5: set @itemID, 23046; break;
+		case 6: set @itemID, 23051; break;
+		case 7: set @itemID, 23054; break;
+		case 8: set @itemID, 23055; break;
+		case 9: set @itemID, 23057; break;
+		case 10: set @itemID, 23059; break;
+		case 11: set @itemID, 23071; break;
+		case 12: set @itemID, 23049; break;
+		case 13: set @itemID, 23063; break;
+		case 14: set @itemID, 23007; break;
+		case 15: set @itemID, 23050; break;
+		case 16: goto L_MidH_Set2;
+		default: close;    
+	}
+	goto L_Equip;
+	
+	L_MidH_Set2:
+	switch(select("Blackfey Wings:Bloody Butterfly Wings:Blue Xanh Wings:Retribution Wings:NiflHeim Wings:White Electric Wings:Silver Avian Wings:Red Aries Wings:Arcane Wings:Spirit Wind:Silver Cutie Wings:Strife Wings:Dragon Ring:Chii Ears:^0000FFPrevious Page^000000")) {
+		case 1: set @itemID, 23320; break;
+		case 2: set @itemID, 23324; break;
+		case 3: set @itemID, 23328; break;
+		case 4: set @itemID, 23428; break;
+		case 5: set @itemID, 23425; break;
+		case 6: set @itemID, 23416; break;
+		case 7: set @itemID, 23393; break;
+		case 8: set @itemID, 23382; break;
+		case 9: set @itemID, 23380; break;
+		case 10: set @itemID, 23374; break;
+		case 11: set @itemID, 23370; break;
+		case 12: set @itemID, 23375; break;
+		case 13: set @itemID, 23336; break;
+		case 14: set @itemID, 23440; break; //Chii Ears
+		default: goto L_MidH;    
+	}
+	goto L_Equip;
+	
+	L_LowH:
+	switch(select("Black Dragon Scarf:Blue Dragon Scarf:Emperor Shoulders Scarf:Hearts Scarf:Lilypad:Little Devil Tail:Marinr:Pink Dragon Scarf:Purple Dragon Scarf:Tiger Tail:Rose Ring:^0000FFNEXT^000000:Quit")) {
+		case 1: set @itemID, 23074; break;
+		case 2: set @itemID, 23075; break;
+		case 3: set @itemID, 23076; break;
+		case 4: set @itemID, 23077; break;
+		case 5: set @itemID, 23078; break;
+		case 6: set @itemID, 23079; break;
+		case 7: set @itemID, 23080; break;
+		case 8: set @itemID, 23081; break;
+		case 9: set @itemID, 23082; break;
+		case 10: set @itemID, 23083; break;
+		case 11: set @itemID, 23084; break;	
+		case 12: goto L_LowH_Set2;
+		default: close;
+	}
+	goto L_Equip;
+	
+	L_LowH_Set2:
+	switch(select("Chakra White:Fable Silks:Black Cat Tail:Fox Tail:Ring Sword:^0000FFPrevious Page^000000")) {
+		case 1: set @itemID, 23438; break;	
+		case 2: set @itemID, 23449; break;
+		case 3: set @itemID, 23476; break;
+		case 4: set @itemID, 23477; break;
+		case 5: set @itemID, 23473; break;
+		default: goto L_LowH;	
+	}
+	goto L_Equip;
+	
+	L_Equip:
+    //modifies char's look based on item
+    set @equip, getiteminfo(@itemID, 5);
+    set @view, getiteminfo(@itemID, 11);
+
+    if(@equip != -1 && @view > 0) {
+            //note: yes...i'm using atcommand here cause for some reason 
+            //      'setlook' has permanent effects...last time i checked at least
+            if(@equip & 1)
+		atcommand "@changelook 3 " + @view;
+            if(@equip & 256)
+                atcommand "@changelook 1 " + @view;
+            if(@equip & 512) 
+		atcommand "@changelook 2 " + @view;
+    }
+
+    mes "Would to like to preview something else?";
+    if(select("Back to Menu", "Quit") == 1) {
+        goto INTRO;
+    }
+        
+    //*preview wears off automatically here due to delayed timer*//
+
+    close;   
+
+
+
+On_Leave:
+    atcommand "@changelook 1 " + @topview;
+    atcommand "@changelook 2 " + @midview;
+    atcommand "@changelook 3 " + @bottomview;
+    close;
+}
