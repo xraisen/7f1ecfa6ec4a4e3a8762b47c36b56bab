@@ -1,5 +1,5 @@
-﻿Build started 6/3/2014 4:47:25 AM.
-     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\Local - Copy\whosell\whosell.vcxproj" on node 2 (build target(s)).
+﻿Build started 6/19/2014 1:59:16 PM.
+     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\whosell\whosell.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "whosell\\whosell.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
@@ -30,18 +30,18 @@
      1>..\src\plugins\whosell.c(154): warning C4996: '_snprintf': This function or variable may be unsafe. Consider using _snprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(363) : see declaration of '_snprintf'
        Link:
-         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"..\plugins\whosell.dll" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"whosell\\whosell.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\Local - Copy\plugins\whosell.pdb" /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"..\plugins\whosell.lib" /MACHINE:X86 /DLL whosell\\whosell.obj
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"..\plugins\whosell.dll" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"whosell\\whosell.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\plugins\whosell.pdb" /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"..\plugins\whosell.lib" /MACHINE:X86 /DLL whosell\\whosell.obj
             Creating library ..\plugins\whosell.lib and object ..\plugins\whosell.exp
          Generating code
          Finished generating code
-         whosell.vcxproj -> D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\Local - Copy\whosell\..\plugins\whosell.dll
+         whosell.vcxproj -> D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\whosell\..\plugins\whosell.dll
        Manifest:
          C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"..\plugins\whosell.dll;#2" /manifest whosell\\whosell.dll.intermediate.manifest
        FinalizeBuildStatus:
          Deleting file "whosell\\whosell.unsuccessfulbuild".
          Touching "whosell\\whosell.lastbuildstate".
-     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\Local - Copy\whosell\whosell.vcxproj" (build target(s)).
+     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\whosell\whosell.vcxproj" (build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:03.37
+Time Elapsed 00:00:02.99
