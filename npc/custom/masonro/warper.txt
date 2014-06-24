@@ -331,8 +331,8 @@ OnStartNPC:
 
 		set .mapOffset, 1000; //increase if total number of nodes exceed
 
-		set .showNodeUserCount, 1;	//enables|disables display of number of users on nodes
-		set .showMapUserCount, 1;	//enables|disables display of number of users on maps
+		set .showNodeUserCount, 0;	//enables|disables display of number of users on nodes
+		set .showMapUserCount, 0;	//enables|disables display of number of users on maps
 		
 		//used for data compression in last warp storage (DON'T TOUCH)
 		setarray .char$[0],
@@ -489,6 +489,11 @@ OnStartNPC:
 				AddMap("Einbroch Field 8", "ein_fild08", 173, 214);
 				AddMap("Einbroch Field 9", "ein_fild09", 207, 174);
 				AddMap("Einbroch Field 10", "ein_fild10", 196, 200);
+			EndNode();
+			StartNode("Eden Fields");
+				AddMap("Eden Fields 1", "eden_fild01", 25, 18);
+				AddMap("Eden Fields 2", "eden_fild02", 31, 25);
+				AddMap("Eden Fields 3", "eden_fild03", 34, 37);
 			EndNode();
 			StartNode("Geffen Fields");
 				AddMap("Geffen Field 0", "gef_fild00", 46, 199);
@@ -722,6 +727,11 @@ OnStartNPC:
 			StartNode("Einbroch Dungeons", "Zeny", 1000);
 				AddMap("Einbroch Dungeons - Lvl 1", "ein_dun01", 22, 14);
 				AddMap("Einbroch Dungeons - Lvl 2", "ein_dun02", 292, 290);
+			EndNode();
+			StartNode("Eden Dungeons", "Zeny", 10000);
+				AddMap("Eden Dungeons - Lvl 1", "eden_dun01", 29, 48);
+				AddMap("Eden Dungeons - Lvl 2", "eden_dun02", 217, 15);
+				AddMap("Eden Dungeons - Lvl 3", "eden_dun03", 48, 168);
 			EndNode();
 			StartNode("Gefenia", "Zeny", 1000);
 				AddMap("Gefenia - Lvl 1", "gefenia01", 40, 103);

@@ -1,0 +1,75 @@
+bastion01,114,129,3	script	Mean Man	100,{
+
+if (quest_mount > 0) goto complete_q;
+
+mes "^33ae1e[Mean Man]^000000";
+
+mes "Hey! What?!? You are that tough? What will happen if I will give you more challenging task?";
+next;
+mes "^33ae1e[Mean Man]^000000";
+mes "Can you keep up?";
+next;
+	switch(select("No:Maybe:Yes")) {
+		case 1:
+			mes "^33ae1e[Mean Man]^000000";
+			mes "Little scared?";
+			break;
+		case 2:
+			mes "^33ae1e[Mean Man]^000000";
+			mes "What the heck?";
+			break;
+		case 3:
+			mes "^33ae1e[Mean Man]^000000";
+			mes "Okay, bring me these items";
+			next;
+			mes "1.) 500 x ^FF0000Fabric^000000";
+			mes "2.) 1 x ^FF0000Sakkat^000000 (Yes, you need to complete the Sakkat Hat quest first.)";
+			mes "3.) 10 x ^FF0000Empty Test Tube^000000";
+			next;
+			mes "^33ae1e[Mean Man]^000000";
+			mes "I will reward you 2 x ^FF0000Halter Lead 30 Day Box^000000 box.";
+			next;
+			mes "^33ae1e[Mean Man]^000000";
+			mes "Fair enough?";
+			next;
+			switch(select("No:Yes")) {
+				case 1:
+					mes "^33ae1e[Mean Man]^000000";
+					mes "Are you stupid?";
+					break;
+				case 2:					
+					mes "^33ae1e[Mean Man]^000000";
+					mes "You are stupid!";
+					if (checkquest(41000) == 2) erasequest (41000);
+					setquest 41000;
+					set quest_mount,1;
+					break;
+			}
+			
+			break;
+	}
+close;
+end;
+
+complete_q:
+if ((countitem(1059) >= 500) && (countitem(2280) >= 1) &&(countitem(1092) >= 10) ) {
+	mes "^33ae1e[Mean Man]^000000";
+	mes "...";
+	next;
+	mes ".....";
+	next;
+	mes "^33ae1e[Mean Man]^000000";
+	mes "Okay, okay! I admit! You are the beast! Take this item and go!"; 
+	delitem 1059,500;
+	delitem 2280,1;
+	delitem 1092,10;
+	getitembound 16683,2,1;
+	set quest_mount,0;
+	completequest 41000;
+} else {
+	mes "^33ae1e[Mean Man]^000000";
+	mes "You don't have the complete items that I requested. Come back again if you have it you moron!";
+}
+close;
+end;
+}
