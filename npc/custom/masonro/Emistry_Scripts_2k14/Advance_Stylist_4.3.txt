@@ -170,8 +170,4 @@ prontera,158,193,3	script	Adv. Stylist#main	878,{
 	doevent "Stylist::OnTalk";
 }
 
-prontera,115,183,5	duplicate(Adv. Stylist#main)	Adv. Stylist#1	878
-prontera,115,184,5	duplicate(Adv. Stylist#main)	Adv. Stylist#2	878
-prontera,115,185,5	duplicate(Adv. Stylist#main)	Adv. Stylist#3	878
-
 

@@ -1975,17 +1975,287 @@
 23101,479,100 //Ancient Master Refinery Scroll
 23102,479,100 //Ancient Basic Refinery Scroll
 
-//Headgear-Hi
-24000,479,100 //Alucard Hat Special
-24001,479,100 //Angel Evil Helm Special
-24002,479,100 //Black Pirate Hat Special
+30000,479,100 //Alucard Hat Special
+30001,479,100 //Angel Evil Helm Special
+30002,479,100 //Black Pirate Hat Special
+30003,479,100 //Bongun Bunny Hat Special
+30004,479,100 //Cat O Nine Tails Hat Special
+30005,479,100 //China Man Hat Special
+30006,479,100 //Cow Ring Hat Special
+30007,479,100 //Dark Wiz Hat Special
+30008,479,100 //Drooping Amistr Special
+30009,479,100 //Drooping Bapho Special
+30010,479,100 //Drooping Chunge Special
+30011,479,100 //Drooping Eddga Special
+30012,479,100 //Drooping Hylozoist Doll Special
+30013,479,100 //Drooping Kon Special
+30014,479,100 //Drooping Leaf Cat Special
+30015,479,100 //Drooping Succubus Special
+30016,479,100 //Drooping Wild Rose Special
+30017,479,100 //Elemental Helm Special
+30018,479,100 //Enchanted Hat Special
+30019,479,100 //Frey Hat Special
+30020,479,100 //Goat Horn Hat Special
+30021,479,100 //Gryphon Hat Special
+30022,479,100 //Hokage Hat Special
+30023,479,100 //Hollow Ring Hat Special
+30024,479,100 //Hyegun Hat Special
+30025,479,100 //Ice Wolf Hat Special
+30026,479,100 //Lunatic Hat Special
+30027,479,100 //Maya Hat Special
+30028,479,100 //Mini Hat Special
+30029,479,100 //Moonlight Hat Special
+30030,479,100 //Neko Ring Hat Special
+30031,479,100 //Orc Hero Helm Special
+30032,479,100 //Phreeoni Hat Special
+30033,479,100 //Pirate Hunter Hat Special
+30034,479,100 //Rabbit In The Hat Special
+30035,479,100 //Randgris Hat Special
+30036,479,100 //Reisz Helm Special
+30037,479,100 //Robin Hood Hat Special
+30038,479,100 //Romanian Helm Special
+30039,479,100 //Spiritous Cyan Helm Special
+30040,479,100 //Stuffed Panda Hat Special
+30041,479,100 //Travelers Hat Special
+30042,479,100 //Twin Bunnies Hat Special
+30043,479,100 //Usako Ring Hat Special
+30044,479,100 //Whitewolf Hat Special
+30045,479,100 //Zeneth Crown Helm Special
+		
+30046,479,100 //Alucard Hat Special
+30047,479,100 //Angel Evil Helm Special
+30048,479,100 //Black Pirate Hat Special
+30049,479,100 //Bongun Bunny Hat Special
+30050,479,100 //Cat O Nine Tails Hat Special
+30051,479,100 //China Man Hat Special
+30052,479,100 //Cow Ring Hat Special
+30053,479,100 //Dark Wiz Hat Special
+30054,479,100 //Drooping Amistr Special
+30055,479,100 //Drooping Bapho Special
+30056,479,100 //Drooping Chunge Special
+30057,479,100 //Drooping Eddga Special
+30058,479,100 //Drooping Hylozoist Doll Special
+30059,479,100 //Drooping Kon Special
+30060,479,100 //Drooping Leaf Cat Special
+30061,479,100 //Drooping Succubus Special
+30062,479,100 //Drooping Wild Rose Special
+30063,479,100 //Elemental Helm Special
+30064,479,100 //Enchanted Hat Special
+30065,479,100 //Frey Hat Special
+30066,479,100 //Goat Horn Hat Special
+30067,479,100 //Gryphon Hat Special
+30068,479,100 //Hokage Hat Special
+30069,479,100 //Hollow Ring Hat Special
+30070,479,100 //Hyegun Hat Special
+30071,479,100 //Ice Wolf Hat Special
+30072,479,100 //Lunatic Hat Special
+30073,479,100 //Maya Hat Special
+30074,479,100 //Mini Hat Special
+30075,479,100 //Moonlight Hat Special
+30076,479,100 //Neko Ring Hat Special
+30077,479,100 //Orc Hero Helm Special
+30078,479,100 //Phreeoni Hat Special
+30079,479,100 //Pirate Hunter Hat Special
+30080,479,100 //Rabbit In The Hat Special
+30081,479,100 //Randgris Hat Special
+30082,479,100 //Reisz Helm Special
+30083,479,100 //Robin Hood Hat Special
+30084,479,100 //Romanian Helm Special
+30085,479,100 //Spiritous Cyan Helm Special
+30086,479,100 //Stuffed Panda Hat Special
+30087,479,100 //Travelers Hat Special
+30088,479,100 //Twin Bunnies Hat Special
+30089,479,100 //Usako Ring Hat Special
+30090,479,100 //Whitewolf Hat Special
+30091,479,100 //Zeneth Crown Helm Special
+		
+30092,479,100 //Angeling Wings Special
+30093,479,100 //Angel Wings Special
+30094,479,100 //Arcane Intity Wings Special
+30095,479,100 //Arctic Frozen Wings Special
+30096,479,100 //Arctic Wings Special
+30097,479,100 //Aries Wings Special
+30098,479,100 //Black Butterfly Wings Special
+30099,479,100 //Blue Symphonia Wings Special
+30100,479,100 //Butterfly Wings Special
+30101,479,100 //Celestial Wings Special
+30102,479,100 //Channel Wings Special
+30103,479,100 //Cyan Avian Wings Special
+30104,479,100 //Dark Retribution Special
+30105,479,100 //Death Wings Special
+30106,479,100 //Demon Wings Special
+30107,479,100 //Deviling Wings Special
+30108,479,100 //Doom Wings Special
+30109,479,100 //Elemental Wings Special
+30110,479,100 //Emperor Wings Special
+30111,479,100 //Fairy Wings Special
+30112,479,100 //Flame Butterfly Wings Special
+30113,479,100 //Golden Wings Special
+30114,479,100 //Gontix Wings Special
+30115,479,100 //Icarus Wings Special
+30116,479,100 //Imp Wings Special
+30117,479,100 //Incubus Wings Special
+30118,479,100 //Insect Wings Special
+30119,479,100 //Judgement Wings Special
+30120,479,100 //Little Death Wings Special
+30121,479,100 //Little Devil Wings Special
+30122,479,100 //Medium Phoenix Wings Special
+30123,479,100 //Mini Mech Wings Special
+30124,479,100 //Oracle Wings Special
+30125,479,100 //Phase Wings Special
+30126,479,100 //Phoenix Wings Special
+30127,479,100 //Purified Wings Special
+30128,479,100 //Purple Demon Wings Special
+30129,479,100 //Red Aries Wings Special
+30130,479,100 //Red Demon Wings Special
+30131,479,100 //Retribution Wings Special
+30132,479,100 //Scarlet Wings Special
+30133,479,100 //Strafe Wings Special
+30134,479,100 //Succubus Wings Special
+30135,479,100 //Techno Wings Special
+30136,479,100 //Titan Wings Special
+30137,479,100 //White Butterfly Wings Special
+		
+30138,479,100 //Angeling Wings Special
+30139,479,100 //Angel Wings Special
+30140,479,100 //Arcane Intity Wings Special
+30141,479,100 //Arctic Frozen Wings Special
+30142,479,100 //Arctic Wings Special
+30143,479,100 //Aries Wings Special
+30144,479,100 //Black Butterfly Wings Special
+30145,479,100 //Blue Symphonia Wings Special
+30146,479,100 //Butterfly Wings Special
+30147,479,100 //Celestial Wings Special
+30148,479,100 //Channel Wings Special
+30149,479,100 //Cyan Avian Wings Special
+30150,479,100 //Dark Retribution Special
+30151,479,100 //Death Wings Special
+30152,479,100 //Demon Wings Special
+30153,479,100 //Deviling Wings Special
+30154,479,100 //Doom Wings Special
+30155,479,100 //Elemental Wings Special
+30156,479,100 //Emperor Wings Special
+30157,479,100 //Fairy Wings Special
+30158,479,100 //Flame Butterfly Wings Special
+30159,479,100 //Golden Wings Special
+30160,479,100 //Gontix Wings Special
+30161,479,100 //Icarus Wings Special
+30162,479,100 //Imp Wings Special
+30163,479,100 //Incubus Wings Special
+30164,479,100 //Insect Wings Special
+30165,479,100 //Judgement Wings Special
+30166,479,100 //Little Death Wings Special
+30167,479,100 //Little Devil Wings Special
+30168,479,100 //Medium Phoenix Wings Special
+30169,479,100 //Mini Mech Wings Special
+30170,479,100 //Oracle Wings Special
+30171,479,100 //Phase Wings Special
+30172,479,100 //Phoenix Wings Special
+30173,479,100 //Purified Wings Special
+30174,479,100 //Purple Demon Wings Special
+30175,479,100 //Red Aries Wings Special
+30176,479,100 //Red Demon Wings Special
+30177,479,100 //Retribution Wings Special
+30178,479,100 //Scarlet Wings Special
+30179,479,100 //Strafe Wings Special
+30180,479,100 //Succubus Wings Special
+30181,479,100 //Techno Wings Special
+30182,479,100 //Titan Wings Special
+30183,479,100 //White Butterfly Wings Special
+		
+30184,479,100 //Black Chakra Special
+30185,479,100 //Black Dragon Special
+30186,479,100 //Blue Dragon Special
+30187,479,100 //Butters Music Ring Special
+30188,479,100 //Candy Ring Special
+30189,479,100 //Cat Black Tail Special
+30190,479,100 //Cypher 2 Special
+30191,479,100 //Cypher Special
+30192,479,100 //Dragon Ring Special
+30193,479,100 //Emperors Shoulder Special
+30194,479,100 //Fable Silks Black Special
+30195,479,100 //Fable Silks Blue Special
+30196,479,100 //Fable Silks Cherry Special
+30197,479,100 //Fable Silks Lime Special
+30198,479,100 //Fable Silks Orange Special
+30199,479,100 //Fable Silks Rainbow Special
+30200,479,100 //Fable Silks Red Special
+30201,479,100 //Fable Silks White Special
+30202,479,100 //Fable Silks Yellow Special
+30203,479,100 //Fallbishop Ghost Special
+30204,479,100 //Fox Tail Special
+30205,479,100 //Green Chakra Special
+30206,479,100 //Heart Ring Special
+30207,479,100 //Holly Ring Special
+30208,479,100 //I Heart Masonro Special
+30209,479,100 //Jiraiya Cookie Ring Special
+30210,479,100 //Lilypad Special
+30211,479,100 //Little Devil Tail Special
+30212,479,100 //Marin Ring Special
+30213,479,100 //Pink Dragon Special
+30214,479,100 //Purple Chakra Special
+30215,479,100 //Purple Dragon Special
+30216,479,100 //Rabo De Gato Special
+30217,479,100 //Red Chakra Special
+30218,479,100 //Ring Day Special
+30219,479,100 //Ring Night Special
+30220,479,100 //Ring Snowflake Special
+30221,479,100 //Ring Sword Special
+30222,479,100 //Rose Ring Special
+30223,479,100 //Sheep Tail Special
+30224,479,100 //Spirit Fire Special
+30225,479,100 //Super Saiyan Tail Special
+30226,479,100 //Tensa Zangetsu Special
+30227,479,100 //White Chakra Special
+30228,479,100 //White Dragon Special
+30229,479,100 //Wolf Tail Special
+30230,479,100 //Yellow Chakra Special
+		
+30231,479,100 //Black Chakra Special
+30232,479,100 //Black Dragon Special
+30233,479,100 //Blue Dragon Special
+30234,479,100 //Butters Music Ring Special
+30235,479,100 //Candy Ring Special
+30236,479,100 //Cat Black Tail Special
+30237,479,100 //Cypher 2 Special
+30238,479,100 //Cypher Special
+30239,479,100 //Dragon Ring Special
+30240,479,100 //Emperors Shoulder Special
+30241,479,100 //Fable Silks Black Special
+30242,479,100 //Fable Silks Blue Special
+30243,479,100 //Fable Silks Cherry Special
+30244,479,100 //Fable Silks Lime Special
+30245,479,100 //Fable Silks Orange Special
+30246,479,100 //Fable Silks Rainbow Special
+30247,479,100 //Fable Silks Red Special
+30248,479,100 //Fable Silks White Special
+30249,479,100 //Fable Silks Yellow Special
+30250,479,100 //Fallbishop Ghost Special
+30251,479,100 //Fox Tail Special
+30252,479,100 //Green Chakra Special
+30253,479,100 //Heart Ring Special
+30254,479,100 //Holly Ring Special
+30255,479,100 //I Heart Masonro Special
+30256,479,100 //Jiraiya Cookie Ring Special
+30257,479,100 //Lilypad Special
+30258,479,100 //Little Devil Tail Special
+30259,479,100 //Marin Ring Special
+30260,479,100 //Pink Dragon Special
+30261,479,100 //Purple Chakra Special
+30262,479,100 //Purple Dragon Special
+30263,479,100 //Rabo De Gato Special
+30264,479,100 //Red Chakra Special
+30265,479,100 //Ring Day Special
+30266,479,100 //Ring Night Special
+30267,479,100 //Ring Snowflake Special
+30268,479,100 //Ring Sword Special
+30269,479,100 //Rose Ring Special
+30270,479,100 //Sheep Tail Special
+30271,479,100 //Spirit Fire Special
+30272,479,100 //Super Saiyan Tail Special
+30273,479,100 //Tensa Zangetsu Special
+30274,479,100 //White Chakra Special
+30275,479,100 //White Dragon Special
+30276,479,100 //Wolf Tail Special
+30277,479,100 //Yellow Chakra Special
 
-//Headgear-Mid
-24092,479,100 //Angeling Wings Special
-24093,479,100 //Angel Wings Special
-24094,479,100 //Arcane Intity Wings Special
-
-//Headgear-Low
-24184,479,100 //Black Chakra Special
-24185,479,100 //Black Dragon Special
-24186,479,100 //Blue Dragon Special
