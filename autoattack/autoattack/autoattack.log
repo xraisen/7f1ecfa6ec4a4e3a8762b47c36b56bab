@@ -1,22 +1,9 @@
-﻿Build started 6/19/2014 1:58:41 PM.
-     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autoattack\autoattack.vcxproj" on node 2 (build target(s)).
-     1>InitializeBuildStatus:
-         Touching "autoattack\\autoattack.unsuccessfulbuild".
-       ClCompile:
-         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\src\common /I..\3rdparty\msinttypes\include /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D _WINDLL /D _MBCS /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"autoattack\\" /Fd"autoattack\\vc100.pdb" /Gd /TC /analyze- /errorReport:prompt ..\src\plugins\autoattack.c
-         autoattack.c
-     1>..\src\plugins\autoattack.c(79): error C2065: 'timer' : undeclared identifier
-     1>..\src\plugins\autoattack.c(79): error C2223: left of '->add' must point to struct/union
-     1>..\src\plugins\autoattack.c(79): error C2065: 'timer' : undeclared identifier
-     1>..\src\plugins\autoattack.c(79): error C2223: left of '->gettick' must point to struct/union
-     1>..\src\plugins\autoattack.c(98): error C2065: 'timer' : undeclared identifier
-     1>..\src\plugins\autoattack.c(98): error C2223: left of '->add' must point to struct/union
-     1>..\src\plugins\autoattack.c(98): error C2065: 'timer' : undeclared identifier
-     1>..\src\plugins\autoattack.c(98): error C2223: left of '->gettick' must point to struct/union
-     1>..\src\plugins\autoattack.c(114): error C2065: 'timer' : undeclared identifier
-     1>..\src\plugins\autoattack.c(114): warning C4047: '=' : 'int' differs in levels of indirection from 'void *'
-     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autoattack\autoattack.vcxproj" (build target(s)) -- FAILED.
+﻿Build started 6/26/2014 1:30:31 AM.
+     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autoattack\autoattack.vcxproj" on node 2 (clean target(s)).
+     1>_PrepareForClean:
+         Deleting file "autoattack\\autoattack.lastbuildstate".
+     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autoattack\autoattack.vcxproj" (clean target(s)).
 
-Build FAILED.
+Build succeeded.
 
-Time Elapsed 00:00:01.03
+Time Elapsed 00:00:00.07
