@@ -24,9 +24,9 @@ function	script	int_decimal_places	{
 }
 
 function	script	bonus_special	{
-for ( set .@i, 24092; .@i <= 24094; set .@i, .@i +1 ){
+for ( set .@i, 30092; .@i <= 30094; set .@i, .@i +1 ){
 	if (isequipped(.@i)) {
-		for ( set .@i, 24184; .@i <= 24186; set .@i, .@i +1 ){
+		for ( set .@i, 30184; .@i <= 30186; set .@i, .@i +1 ){
 			if (isequipped(.@i)) {
 			bonus2 bSubRace,7,10;
 			bonus2 bAddRace,7,10;
