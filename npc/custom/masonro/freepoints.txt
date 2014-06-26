@@ -1,0 +1,118 @@
+prontera,162,190,4	trader	Kafra Points	76,{
+	OnInit:
+	tradertype(NST_CUSTOM);
+
+	sellitem 6224,1;
+	sellitem 6223,1;
+	sellitem 6226,2;
+	sellitem 6225,2;	
+	sellitem 13634, 500;
+	sellitem 13635, 500;
+	sellitem 13636, 500;
+	sellitem 13637, 500;
+	sellitem 13638, 500;
+	sellitem 13639, 500;
+	sellitem 14125, 500;
+	sellitem 13503, 500;
+	sellitem 14137, 500;
+	sellitem 12917, 500;
+	sellitem 13910, 500;
+	sellitem 13724, 500;
+	sellitem 13894, 500;
+	sellitem 13891, 500;
+	sellitem 13892, 500;
+	sellitem 13893, 500;
+	sellitem 14002, 500;
+	sellitem 13820, 500;
+	sellitem 13507, 500;
+	sellitem 14543, 500;
+	sellitem 14343, 500;
+	sellitem 13954, 500;
+	sellitem 13748, 500;
+	sellitem 13754, 500;
+	sellitem 13956, 500;
+	sellitem 12945, 500;
+	sellitem 13958, 500;
+	sellitem 14057, 500;
+	sellitem 13511, 500;
+	sellitem 13775, 500;
+	sellitem 12946, 500;
+	sellitem 12938, 500;
+	sellitem 14119, 500;
+	sellitem 12953, 500;
+	sellitem 13509, 500;
+	sellitem 12939, 500;
+	sellitem 12954, 500;
+	sellitem 12937, 500;
+	sellitem 13505, 500;
+	sellitem 12950, 500;
+	sellitem 12935, 500;
+	sellitem 12940, 500;
+	sellitem 12943, 500;
+	sellitem 12942, 500;
+	sellitem 13513, 500;
+	sellitem 12936, 500;
+	sellitem 12941, 500;
+	sellitem 13783, 500;
+	sellitem 13506, 500;
+	sellitem 13771, 500;
+	sellitem 13767, 500;
+	sellitem 13903, 500;
+	sellitem 13683, 500;
+	sellitem 14250, 500;
+	sellitem 13650, 500;
+	sellitem 13502, 500;
+	sellitem 13773, 500;
+	sellitem 13770, 500;
+	sellitem 13772, 500;
+	sellitem 13778, 500;
+	sellitem 13774, 500;
+	sellitem 14120, 500;
+	sellitem 13512, 500;
+	sellitem 14121, 500;
+	sellitem 14116, 500;
+	sellitem 13766, 500;
+	sellitem 13769, 500;
+	sellitem 13508, 500;
+	sellitem 13510, 500;
+	sellitem 13514, 500;
+	sellitem 13776, 750;
+	sellitem 13779, 750;
+	sellitem 14260, 750;
+	sellitem 13640, 750;
+	sellitem 13641, 750;
+	sellitem 13642, 750;
+	sellitem 13643, 750;
+	sellitem 13645, 750;
+	sellitem 13594, 1000;
+	sellitem 14155, 1000;
+	sellitem 13751, 1000;
+	sellitem 13718, 1000;
+	sellitem 13863, 1000;
+	sellitem 12961, 1000;
+	sellitem 12962, 1000;
+	sellitem 12963, 1000;
+	sellitem 12964, 1000;
+	sellitem 13595, 1250;
+	sellitem 13906, 1250;
+	sellitem 13908, 1250;
+	sellitem 13581, 1250;
+	sellitem 13739, 1250;
+
+	
+	end;
+
+OnCountFunds:
+	setcurrency(#KAFRAPOINTS,#NULL); 
+	end;
+
+OnPayFunds:
+	dispbottom "Thank you for redeeming your points " +strcharinfo(0)+"!";
+	dispbottom "Your total point spent was "+@price+ " points.";
+	if( #NULL < @points || #KAFRAPOINTS < @price-@points )
+		end;
+	#NULL -= @points;
+	#KAFRAPOINTS -= (@price-@points);
+	purchaseok();
+	end;
+}

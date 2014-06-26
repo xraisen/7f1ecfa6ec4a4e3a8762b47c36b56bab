@@ -1,6 +1,50 @@
 prontera,157,190,4	trader	Vote 4 Points	4_F_EDEN_OFFICER,{
 	OnInit:
 	tradertype(NST_CUSTOM);
+	
+	sellitem 6224,10;
+	sellitem 6223,10;
+	sellitem 6226,20;
+	sellitem 6225,20;
+	sellitem 13023,100;
+	sellitem 2693,100;
+	sellitem 5529,100;
+	sellitem 2535,100;
+	sellitem 13021,100;
+	sellitem 2688,100;
+	sellitem 13402,100;
+	sellitem 13022,100;
+	sellitem 13401,100;
+	sellitem 1174,100;
+	sellitem 5268,100;
+	sellitem 1267,100;
+	sellitem 1817,100;
+	sellitem 1372,100;
+	sellitem 5326,100;
+	sellitem 1623,100;
+	sellitem 13026,100;
+	sellitem 1173,100;
+	sellitem 1419,100;
+	sellitem 1373,100;
+	sellitem 1273,100;
+	sellitem 1424,100;
+	sellitem 13408,100;
+	sellitem 1378,100;
+	sellitem 1567,100;
+	sellitem 5327,100;
+	sellitem 13409,100;
+	sellitem 13407,100;
+	sellitem 1537,100;
+	sellitem 1628,100;
+	sellitem 13024,100;
+	sellitem 1274,100;
+	sellitem 1729,100;
+	sellitem 1563,100;
+	sellitem 13403,100;
+	sellitem 2711,100;
+	sellitem 1374,100;
+	sellitem 1534,100;	
+
 	sellitem 19506,108;
 	sellitem 19526,108;
 	sellitem 19545,108;
@@ -13,6 +57,8 @@ prontera,157,190,4	trader	Vote 4 Points	4_F_EDEN_OFFICER,{
 	sellitem 19515,216;
 	sellitem 19552,216;
 	sellitem 19573,216;
+	
+	sellitem 30255,250;
 	
 	sellitem 19570,324;
 	sellitem 19543,324;
@@ -41,7 +87,8 @@ OnCountFunds:
 	end;
 
 OnPayFunds:
-	dispbottom "Hi: price="+@price+" and points="+@points;
+	dispbottom "Thank you for redeeming your points " +strcharinfo(0)+"!";
+	dispbottom "Your total point spent was "+@price+ " points.";
 	if( #NULL < @points || #VOTES < @price-@points )
 		end;
 	#NULL -= @points;
