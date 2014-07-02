@@ -24,12 +24,47 @@ function	script	int_decimal_places	{
 }
 
 function	script	bonus_special	{
-for ( set .@i, 30092; .@i <= 30094; set .@i, .@i +1 ){
-	if (isequipped(.@i)) {
-		for ( set .@i, 30184; .@i <= 30186; set .@i, .@i +1 ){
-			if (isequipped(.@i)) {
-			bonus2 bSubRace,7,10;
-			bonus2 bAddRace,7,10;
+if (isequipped(30000) || isequipped(30001) || isequipped(30002)) {
+	if (isequipped(30092) || isequipped(30093) || isequipped(30094)) {
+		if (isequipped(30184) || isequipped(30185) || isequipped(30186)) {
+			bonus2 bSubRace,7,30;
+			bonus2 bAddRace,7,30;
+			bonus bNoGemStone,1;
+			
+			bonus2 bAddEff,Eff_Blind,2000;
+			bonus2 bAddEff,Eff_Sleep,2000;
+			bonus2 bAddEff,Eff_Poison,2000;
+			bonus2 bAddEff,Eff_Freeze,2000;
+			bonus2 bAddEff,Eff_Silence,2000;
+			bonus2 bAddEff,Eff_Stun,2000;
+			bonus2 bAddEff,Eff_Curse,2000;
+			bonus2 bAddEff,Eff_Confusion,2000;
+			bonus2 bAddEff,Eff_Stone,2000;
+			bonus2 bAddEff,Eff_Bleeding,2000;
+			
+			bonus2 bResEff,Eff_Blind,5000;
+			bonus2 bResEff,Eff_Sleep,5000;
+			bonus2 bResEff,Eff_Poison,5000;
+			bonus2 bResEff,Eff_Freeze,5000;
+			bonus2 bResEff,Eff_Silence,5000;
+			bonus2 bResEff,Eff_Stun,5000;
+			bonus2 bResEff,Eff_Curse,5000;
+			bonus2 bResEff,Eff_Confusion,5000;
+			bonus2 bResEff,Eff_Stone,5000;
+			bonus2 bResEff,Eff_Bleeding,5000;	
+		}
+	}
+}
+
+return bonus_special;
+}
+
+function	script	bonus_special_formless	{
+if (isequipped(30003) || isequipped(30004) || isequipped(30005)) {
+	if (isequipped(30095) || isequipped(30096) || isequipped(30097)) {
+		if (isequipped(30187) || isequipped(30188) || isequipped(30189)) {
+			bonus2 bSubRace,0,30;
+			bonus2 bAddRace,0,30;
 			bonus bNoGemStone,1;
 			
 			bonus2 bAddEff,Eff_Blind,2000;
@@ -53,12 +88,9 @@ for ( set .@i, 30092; .@i <= 30094; set .@i, .@i +1 ){
 			bonus2 bResEff,Eff_Confusion,5000;
 			bonus2 bResEff,Eff_Stone,5000;
 			bonus2 bResEff,Eff_Bleeding,5000;
-			
-			}
 		}
 	}
 }
 
-
-return bonus_special;
+return bonus_special_formless;
 }
