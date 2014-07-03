@@ -42,10 +42,10 @@ OnTalk:
 
 	addtimer 1000,strnpcinfo(0)+"::OnPCLogoutEvent";
 	do{
-		message strcharinfo(0),.menu_name$[@style]+" : "+.@style_number+"th";
+		//message strcharinfo(0),.menu_name$[@style]+" : "+.@style_number+"th";
 		.@removed = 0;
 		if( compare( .@blacklist$,","+.@style_number+"," ) ){
-			message strcharinfo(0),"[ REMOVED ] "+.menu_name$[@style]+" : "+.@style_number+"th";
+			//message strcharinfo(0),"[ REMOVED ] "+.menu_name$[@style]+" : "+.@style_number+"th";
 			.@removed = 1;
 			// setlook .look_type[@style],.min_style[@style];
 		}else{
@@ -70,13 +70,13 @@ OnTalk:
 				.@style_number = (( .@backward )? .@prev:.@next );
 				break;
 			case 3:	
-				message strcharinfo(0),"Available Style : "+.min_style[@style]+" ~ "+.max_style[@style]+".";
+				//message strcharinfo(0),"Available Style : "+.min_style[@style]+" ~ "+.max_style[@style]+".";
 				input .@style_number,.min_style[@style],.max_style[@style];
 				break;
 			case 4:
 				.@atoi_currency = atoi( .currency$[@style] );
 				if( @style_value == .@style_number ){
-					message strcharinfo(0),"Swt..that is your original hairstyles.";
+					//message strcharinfo(0),"Swt..that is your original hairstyles.";
 					break;
 				} else if( .@atoi_currency ){
 					if( countitem( .@atoi_currency ) >= .cost[@style] ){
@@ -90,7 +90,7 @@ OnTalk:
 					}
 				}
 				if( .@success ){
-					message strcharinfo(0),"Enjoy your NEW "+.menu_name$[@style]+" !!";
+					//message strcharinfo(0),"Enjoy your NEW "+.menu_name$[@style]+" !!";
 					@style_value = .@style_number;
 				}else{
 					mes "You dont have enough "+.currency_name$[@style]+" to change this "+.menu_name$[@style]+".";
