@@ -1,0 +1,224 @@
+new_1-1,58,112,4	script	MasonRO Assistant#1	4_F_KAFRA1,{
+
+cutin "kafra_08",2;
+
+npctalk "How do you do? To get the freebies, please talk to me.";
+
+mes "[^33ae1eMasonRO Assistant^000000]";
+mes "Hello " + strcharinfo(0) +"!";
+mes "Welcome to the ^FF0000Mason Ragnarok Online^000000, a renewal low-rate to mid-rate server with WoE System, huge custom Battlegrounds, multiple PvP modes and complete, balanced 3rd classes. Enjoy the fantastic rates and unique modifications that offer the ultimate fun factor and nothing is more important than our server and player security!";
+next;
+mes "[^33ae1eMasonRO Assistant^000000]";
+mes "^FF0000MasonRO^000000 is very easy to play! Read further to receive the fantastic ^0000FFfreebies^000000 designed to jump start your gaming experience.";
+mes "Are you ready?";
+next;
+switch(select("No:Yes")) {
+	case 1:
+	mes "[^33ae1eMasonRO Assistant^000000]";
+	mes "Alright then, please come back again whenever you are ready.";
+	break;
+	case 2:
+	mes "[^33ae1eMasonRO Assistant^000000]";
+	mes "Good! Lets start!";	
+	next;
+	goto ROTD;
+	break;
+}
+close2;
+cutin "",255;
+end;
+
+ROTD:
+	if (#rotd_reward == 1) goto Refiner;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Worried about low exp rate? ^FF0000ROTD^000000(Reward Of The Day, prontera 138 184) is the answer. Hunt whatever is the NPC wants you to hunt to obtain ROTD reward item, zeny and EXP with a random exp rate with a max of 100%";
+		next;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "To get the ROTD reward item, please type: ^777877iluvmasonro^000000";
+		next;
+		input .@input$;
+		if (.@input$ == "iluvmasonro") {
+		
+		getitem 23000,5;
+		set #rotd_reward,1;
+		emotion e_grat,0;
+		goto Refiner;
+		
+	} else {
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Oh! Please try again.";	
+	}	
+	
+close2;	
+cutin "",255;
+end;
+
+Refiner:
+	if (#refiner_reward == 1) goto Item_Mall;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Trouble of making +20 item? ^FF0000Advance Refiner^000000 gives you a higher rate of refining success, but I recommend you to use ^0000FFHD Branium^000000 and ^0000FFHD Carnium^000000. ^FF0000Advance Refiner^000000 NPC are located at Prontera(prt_in)";
+		next;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "To get the the basic ^0000FFrefiners ticket^000000(5), ^0000FFexpert refiners ticket^000000(5) and the ^0000FFmaster refiners ticket^000000(5) please type: ^777877iluvmasonro^000000";
+		next;
+		input .@input$;
+		if (.@input$ == "iluvmasonro") {
+		
+		getitem 23100,5;
+		getitem 23101,5;
+		getitem 23102,5;
+		set #refiner_reward,1;
+		emotion e_grat,0;
+		goto Item_Mall;
+		
+	} else {
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Oh! Please try again.";	
+	}	
+close2;
+cutin "",255;
+end;
+
+Item_Mall:
+	if (#Item_Mall_reward == 1) goto Eden_Map;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Need Items? ^FF0000Item Mall^000000 is here for you. Please check the item mall if all the items you need is available. Since this is a low-rate to mid-rate server, expect some items are not available. ^FF0000Item Mall^000000 NPC are located on prontera(160, 190).";
+		next;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "To get the the 500,000 zeny, please type: ^777877iluvmasonro^000000";
+		next;
+		input .@input$;
+		if (.@input$ == "iluvmasonro") {
+		
+		set Zeny, Zeny + 500000;
+		set #Item_Mall_reward,1;
+		emotion e_grat,0;
+		goto Eden_Map;
+		
+	} else {
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Oh! Please try again.";	
+	}	
+close2;
+cutin "",255;
+end;
+
+Eden_Map:
+	if (#Eden_Map_reward == 1) goto Farm_zone;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Want to level up fast? Custom ^FF0000Eden^000000 map(fild_01, fild_02, fild_03, dun_01, dun_02, dun_03) is here for you. But beware, this map require you to have ^0000FFAngra Manyu^000000 and ^0000FFAhura Mazda^000000 to survive. Monsters from the dungeon drops a ^0000FFBloody Branch^000000 item as well. Eden town, field and dungeon can ba accessed thru the Warper NPC";
+		next;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "To get the 7 days ^0000FFAngra Manyu^000000 and ^0000FFAhura Mazda^000000, please type: ^777877iluvmasonro^000000";
+		next;
+		input .@input$;
+		if (.@input$ == "iluvmasonro") {
+		
+		rentitem 1599,604800;
+		rentitem 2199,604800;		
+		set #Eden_Map_reward,1;
+		emotion e_grat,0;
+		goto Farm_zone;
+		
+	} else {
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Oh! Please try again.";	
+	}	
+close2;
+cutin "",255;
+end;
+
+Farm_zone:
+	if (#Farm_zone_reward == 1) goto custom_item;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Yeah, yeah, yeah. I know you need HP items such as ^0000FFYggdrasil Berry^000000 to farm for MvP and GvG. ^FF0000Farm Zone^000000 is here for you. You can farm various items, be sure to check it out. ^FF0000Farm Zone^000000 is located at Custom Eden(eden_in01 284,307) map.";
+		next;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "To get ^0000FFYggdrasil Berry^000000(20), please type: ^777877iluvmasonro^000000";
+		next;
+		input .@input$;
+		if (.@input$ == "iluvmasonro") {
+		
+		getitem 607,20;
+		
+		set #Farm_zone_reward,1;
+		emotion e_grat,0;
+		goto custom_item;
+		
+	} else {
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Oh! Please try again.";	
+	}	
+close2;
+cutin "",255;
+end;
+
+custom_item:
+	if (#custom_item_reward == 1) goto end_freebies;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "What? ^FF0000Custom Items^000000? Yes, of course! ^FF0000Custom items^000000 are for social status only such as Costumes. Custom costume items are obtainable thru ^FF9900quests^000000, ^FF9900vote for points^000000, ^FF9900kafra points^000000 and ^FF9900donations^000000";
+		next;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "To get 15 days ^0000FFBlack Dragon S Costume, Angel Evil Helm S Costume, Angeling Wings S Costume^000000, please type: ^777877iluvmasonro^000000";
+		next;
+		input .@input$;
+		if (.@input$ == "iluvmasonro") {
+		
+		rentitem 30185,1296000;  
+		rentitem 30001,1296000;  
+		rentitem 30092,1296000;
+		
+		set #custom_item_reward,1;
+		emotion e_grat,0;
+		goto end_freebies;
+		
+	} else {
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Oh! Please try again.";	
+	}	
+close2;
+cutin "",255;
+end;
+
+end_freebies:
+	if (#end_freebies_reward == 1) goto end_message;
+	mes "[^33ae1eMasonRO Assistant^000000]";
+	mes "I think thats all there is for now. ";
+	next;
+	mes "[^33ae1eMasonRO Assistant^000000]";
+	mes "For the added bonus, I can give you ^0000FF300% Battle Manual^000000(1 box, 20 pcs), ^0000FFHalter Lead 30 Day Box^000000 and ^0000FFI Heart MasonRO^000000, please type this one more time: ^777877iluvmasonro^000000";
+	next;
+	input .@input$;
+	if (.@input$ == "iluvmasonro") {
+	
+	getitem 30255,1;  
+	getitem 13758,1;    
+	getitem 16683,1;  
+	
+	emotion e_grat,0;	
+	next;
+	mes "[^33ae1eMasonRO Assistant^000000]";
+	mes "Thank you! I am looking forward seeing you in-game.";
+	next;
+	mes "Yeah, one more thing. If you like the server, please support ^FF0000MasonRO^000000 by donating a small amount found on the website. It is highly appreciated.";
+	next;
+	set #end_freebies_reward, 1;
+	goto end_message;
+	} else {
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Oh! Please try again.";
+	}
+close2;
+cutin "",255;
+end;
+
+end_message:
+mes "[^33ae1eMasonRO Assistant^000000]";
+mes "Thank you! Have fun and enjoy ^FF0000MasonRO!^000000";
+close2;
+cutin "",255;
+end;
+
+}
+
+eden,49,73,4	duplicate(MasonRO Assistant#1)	MasonRO Assistant#2	4_F_KAFRA1
