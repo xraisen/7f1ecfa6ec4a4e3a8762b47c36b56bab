@@ -1,15 +1,15 @@
 new_1-1,58,112,4	script	MasonRO Assistant#1	4_F_KAFRA1,{
 
-cutin "kafra_08",2;
+cutin "2013anninotice",2;
 
-npctalk "How do you do? To get the freebies, please talk to me.";
+message strcharinfo(0), "MasonRO Assistant: How do you do? To get the freebies, please talk to me.";
 
 mes "[^33ae1eMasonRO Assistant^000000]";
 mes "Hello " + strcharinfo(0) +"!";
 mes "Welcome to the ^FF0000Mason Ragnarok Online^000000, a renewal low-rate to mid-rate server with WoE System, huge custom Battlegrounds, multiple PvP modes and complete, balanced 3rd classes. Enjoy the fantastic rates and unique modifications that offer the ultimate fun factor and nothing is more important than our server and player security!";
 next;
 mes "[^33ae1eMasonRO Assistant^000000]";
-mes "^FF0000MasonRO^000000 is very easy to play! Read further to receive the fantastic ^0000FFfreebies^000000 designed to jump start your gaming experience.";
+mes "^FF0000MasonRO^000000 is very easy to play! Read further to receive thes fantastic ^0000FFfreebies^000000 designed to jump start your gaming experience.";
 mes "Are you ready?";
 next;
 switch(select("No:Yes")) {
@@ -59,7 +59,7 @@ Refiner:
 		mes "Trouble of making +20 item? ^FF0000Advance Refiner^000000 gives you a higher rate of refining success, but I recommend you to use ^0000FFHD Branium^000000 and ^0000FFHD Carnium^000000. ^FF0000Advance Refiner^000000 NPC are located at Prontera(prt_in)";
 		next;
 		mes "[^33ae1eMasonRO Assistant^000000]";
-		mes "To get the the basic ^0000FFrefiners ticket^000000(5), ^0000FFexpert refiners ticket^000000(5) and the ^0000FFmaster refiners ticket^000000(5) please type: ^777877iluvmasonro^000000";
+		mes "To get the the ^0000FFbasic refiners ticket^000000(5), ^0000FFexpert refiners ticket^000000(5) and the ^0000FFmaster refiners ticket^000000(5) please type: ^777877iluvmasonro^000000";
 		next;
 		input .@input$;
 		if (.@input$ == "iluvmasonro") {
