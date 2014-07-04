@@ -192,8 +192,8 @@ end_freebies:
 	if (.@input$ == "iluvmasonro") {
 	
 	getitem 30255,1;  
-	getitem 13758,1;    
-	getitem 16683,1;  
+	rentitem 13758,1296000;	 
+	rentitem 16683,1296000;
 	
 	emotion e_grat,0;	
 	next;
