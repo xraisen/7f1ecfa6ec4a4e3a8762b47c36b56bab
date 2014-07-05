@@ -8,6 +8,9 @@ mes "[^33ae1eMasonRO Assistant^000000]";
 mes "Hello " + strcharinfo(0) +"!";
 mes "Welcome to the ^FF0000Mason Ragnarok Online^000000, a renewal low-rate to mid-rate server with WoE System, huge custom Battlegrounds, multiple PvP modes and complete, balanced 3rd classes. Enjoy the fantastic rates and unique modifications that offer the ultimate fun factor and nothing is more important than our server and player security!";
 next;
+
+if (#end_message == 1) goto end_message;
+
 mes "[^33ae1eMasonRO Assistant^000000]";
 mes "^FF0000MasonRO^000000 is very easy to play! Read further to receive thes fantastic ^0000FFfreebies^000000 designed to jump start your gaming experience.";
 mes "Are you ready?";
@@ -139,7 +142,7 @@ Farm_zone:
 		input .@input$;
 		if (.@input$ == "iluvmasonro") {
 		
-		getitem 607,20;
+		getitembound 607,20,1;
 		
 		set #Farm_zone_reward,1;
 		emotion e_grat,0;
@@ -191,15 +194,16 @@ end_freebies:
 	input .@input$;
 	if (.@input$ == "iluvmasonro") {
 	
-	getitem 30255,1;  
-	rentitem 13758,1296000;	 
-	rentitem 16683,1296000;
+	getitembound 30255,1,1;  
+	getitembound 13758,1,1;	 
+	getitembound 16683,1,1;
 	
 	emotion e_grat,0;	
 	next;
 	mes "[^33ae1eMasonRO Assistant^000000]";
 	mes "Thank you! I am looking forward seeing you in-game.";
 	next;
+	mes "[^33ae1eMasonRO Assistant^000000]";
 	mes "Yeah, one more thing. If you like the server, please support ^FF0000MasonRO^000000 by donating a small amount found on the website. It is highly appreciated.";
 	next;
 	set #end_freebies_reward, 1;
@@ -215,6 +219,7 @@ end;
 end_message:
 mes "[^33ae1eMasonRO Assistant^000000]";
 mes "Thank you! Have fun and enjoy ^FF0000MasonRO!^000000";
+set #end_message, 1;
 close2;
 cutin "",255;
 end;
