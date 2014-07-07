@@ -2390,7 +2390,13 @@ int mob_dead(struct mob_data *md, struct block_list *src, int type) {
 			/* temp, will not be hardcoded for long thudu. */
 			if( it->nameid == 7782 || it->nameid == 7783 ) /* for when not hardcoded: add a check on mvp bonus drop as well */
 				clif->item_drop_announce(mvp_sd, it->nameid, md->name);
-			
+			if ( sd ) {
+				if ( it->type == IT_CARD && ( md->status.mode & MD_BOSS ) ) {
+					char message[128];
+					sprintf( message, "Player %s has killed %s and its has been awarded by %s.", sd->status.name, md->name, it->jname );
+					intif_broadcast( message, (int)strlen(message)+1, ALL_CLIENT );
+				}
+			}			
 			// Announce first, or else ditem will be freed. [Lance]
 			// By popular demand, use base drop rate for autoloot code. [Skotlex]
 			mob->item_drop(md, dlist, ditem, 0, md->db->dropitem[i].p, homkillonly);
