@@ -1,0 +1,9 @@
+-	script	mvp_counter	-1,{
+OnNPCKillEvent:
+if( getmonsterinfo( killedrid,MOB_MVPEXP ) ){
+	.@Name$ = strcharinfo(0);
+	announce "[ Player "+.@Name$+" has killed "+getmonsterinfo( killedrid,MOB_NAME )+" at "+strcharinfo(3)+" ]",0;
+	query_sql "INSERT INTO xras_mvp_info (`char_id`, `char_name`, `account_id`, `mob_name`, `mob_card_name`, `mob_card_count`, `mob_count`, `date` ) VALUES ('"+getcharid(0)+"', '"+.@Name$+"', '"+getcharid(3)+"', '"+getmonsterinfo( killedrid,MOB_NAME )+"', 'NO_DROP', '0', '1', '"+gettimetick(2)+"')";
+}
+end;
+}
