@@ -2393,8 +2393,11 @@ int mob_dead(struct mob_data *md, struct block_list *src, int type) {
 			if ( sd ) {
 				if ( it->type == IT_CARD && ( md->status.mode & MD_BOSS ) ) {
 					char message[128];
-					sprintf( message, "Player %s has killed %s and its has been awarded by %s.", sd->status.name, md->name, it->jname );
+
+					sprintf( message, "[ %s has been awarded by %s. ]", sd->status.name, it->jname );
 					intif_broadcast( message, (int)strlen(message)+1, ALL_CLIENT );
+					// insert card count count - xRaisen
+					SQL->Query(map->mysql_handle, "INSERT INTO xras_mvp_info (`char_id`, `char_name`, `account_id`, `mob_name`, `mob_card_name`, `mob_card_count`, `mob_count`, `date` ) VALUES ('%d', '%s', '%d', '%s', '%s', '%d', '%d', '%d')", sd->status.char_id, sd->status.name, sd->status.account_id, md->name, it->jname, 1, 0, (unsigned)time(NULL) );
 				}
 			}			
 			// Announce first, or else ditem will be freed. [Lance]
