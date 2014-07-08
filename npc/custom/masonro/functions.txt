@@ -23,6 +23,32 @@ function	script	int_decimal_places	{
 	return .@nums$;
 }
 
+function	script	cash_points	{
+	set #CASHPOINTS, #CASHPOINTS+100; 
+	set #KAFRAPOINTS, #KAFRAPOINTS+200; 
+	dispbottom "----------------------------------------------";
+	dispbottom "100 cash points and 200 kafra points are added";
+	dispbottom "Your NEW cash points: " + #CASHPOINTS; 
+	dispbottom "Your NEW kafra points: " + #KAFRAPOINTS;
+	set #cash_counter, #cash_counter + 100;
+	
+	dispbottom "Your accumulative cash points: " + #cash_counter; 
+	if ( #cash_counter == 2000 ) {
+		query_sql "UPDATE login SET `group_id`=3 WHERE account_id="+getcharid(3);
+		dispbottom "Congratulations! You have acquired @jump command!";
+	} else if ( #cash_counter == 5000 ) {
+		//getitembound 
+		dispbottom "Congratulations! You have acquired Dedicated NPC to support you!";
+	} else if ( #cash_counter == 8000 ) {
+		getitembound 12622,1,1;
+		dispbottom "Congratulations! You have acquired Halter Lead!";		
+	} else if ( #cash_counter == 10000 ) {
+		query_sql "UPDATE login SET `group_id`=4 WHERE account_id="+getcharid(3);
+		//getitembound 12622,1,1;
+		dispbottom "Congratulations! You have acquired @return command and Nidhoggr's Shadow custom mercenary!";		
+	}
+}
+
 function	script	bonus_special	{
 	if (isequipped(30000) || isequipped(30001) || isequipped(30002)) {
 		if (isequipped(30092) || isequipped(30093) || isequipped(30094)) {
