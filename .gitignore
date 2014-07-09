@@ -113,3 +113,5 @@ Thumbs.db
 /conf/map-server.conf
 /conf/subnet.conf
 /conf/char-server.conf
+/conf/login-server.conf
+/conf/login-server.conf
