@@ -34,6 +34,7 @@ function	script	cash_points	{
 	
 	dispbottom "Your accumulative cash points: " + #cash_counter; 
 	if ( #cash_counter == 2000 ) {
+		set #at_command_trade,1;
 		query_sql "UPDATE login SET `group_id`=3 WHERE account_id="+getcharid(3);
 		dispbottom "Congratulations! You have acquired @jump command!";
 	} else if ( #cash_counter == 5000 ) {

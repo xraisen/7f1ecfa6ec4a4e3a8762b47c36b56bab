@@ -157,7 +157,7 @@ cutin "",255;
 end;
 
 custom_item:
-	if (#custom_item_reward == 1) goto end_freebies;
+	if (#custom_item_reward == 1) goto at_command_trade;
 		mes "[^33ae1eMasonRO Assistant^000000]";
 		mes "What? ^FF0000Custom Items^000000? Yes, of course! ^FF0000Custom items^000000 are for social status only such as Costumes. Custom costume items are obtainable thru ^FF9900quests^000000, ^FF9900vote for points^000000, ^FF9900kafra points^000000 and ^FF9900donations^000000";
 		next;
@@ -172,6 +172,50 @@ custom_item:
 		rentitem 30092,1296000;
 		
 		set #custom_item_reward,1;
+		emotion e_grat,0;
+		goto at_command_trade;
+		
+	} else {
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "Oh! Please try again.";	
+	}	
+close2;
+cutin "",255;
+end;
+
+at_command_trade:
+	if (#at_command_trade == 1) goto end_freebies;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "You should also be aware that, there are a lot of @ commands for players.";
+		next;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "@ commands as follows:";
+		mes " ";
+		mes "^0000FF@go^000000 - Warp to any towns";
+		mes "^0000FF@storeall^000000 - Store all items from equips down to inventory into your storage";
+		mes "^0000FF@storeit^000000 - Store all items from inventory only. Equip items will be ignored";
+		mes "^0000FF@autoatk^000000 ^FF0000(Removed)^000000 - Auto search mobs and auto attack";
+		mes "^0000FF@iall^000000 - Identify all items inside in the inventory";
+		mes "^0000FF@storage^000000 - Open storage";
+		mes "^0000FF@ii^000000 - Search items available on the server";
+		mes "^0000FF@mi^000000 - Search mobs available on the server";
+		mes "^0000FF@autoloot^000000 - Automatically loots item loot. Can be set by percentage";
+		mes "^0000FF@autopots^000000 ^FF0000(Removed)^000000 - Set pots to auto consume when the targetted HP reached";
+		mes "^0000FF@autobuyammo^000000 - Automaticaly buy ammo when your ammo is zero(0)";
+		mes "^0000FF@afk^000000 - Away From Keyboard and park your character. You can also do Pub Chat while AFK";
+		mes "^0000FF@duel^000000 - Duel character from another character";
+		mes "^0000FF@noks^000000 - ANTI-KS system";
+		mes "^0000FF@auction^000000 - Auction system (bidding)";		
+		next;
+		mes "[^33ae1eMasonRO Assistant^000000]";
+		mes "To get ^0000FF@autotrade^000000, please type: ^777877iluvmasonro^000000";
+		next;
+		input .@input$;
+		if (.@input$ == "iluvmasonro") {
+		
+		query_sql "UPDATE login SET `group_id`=3 WHERE account_id="+getcharid(3);
+		
+		set #at_command_trade,1;
 		emotion e_grat,0;
 		goto end_freebies;
 		
