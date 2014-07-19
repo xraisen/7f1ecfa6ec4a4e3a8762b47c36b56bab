@@ -1,4 +1,4 @@
-﻿Build started 7/7/2014 4:00:08 PM.
+﻿Build started 7/19/2014 10:28:55 PM.
      1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autobuyammo\autobuyammo.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "autobuyammo\\autobuyammo.unsuccessfulbuild" because "AlwaysCreate" was specified.
@@ -20,4 +20,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.83
+Time Elapsed 00:00:01.85
