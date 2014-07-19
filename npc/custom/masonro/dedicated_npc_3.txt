@@ -8,7 +8,7 @@ OnInit:
 	sleep2 1;
 	.Hprecover_delay = 59;
 	.scbuffer_delay = 59;
-	setarray .npc_name$[0],"Dedicated Poring A","Dedicated Poring B","Dedicated Poring C";
+	setarray .npc_name$[0],"NPC Helper A","NPC Helper B","NPC Helper C";
 	.npc_total = getarraysize(.npc_name$);
 	for(.@i=0;.@i<.npc_total;.@i++)
 	{
@@ -179,6 +179,6 @@ OnPCLogoutEvent:
 	@id_use = 0;
 	end;
 }
-prontera,154,182,4	duplicate(DedicatedNPCMain)	Dedicated Poring A	1002
-prontera,156,182,4	duplicate(DedicatedNPCMain)	Dedicated Poring B	1002
-prontera,158,182,4	duplicate(DedicatedNPCMain)	Dedicated Poring C	1002
+prontera,154,182,4	duplicate(DedicatedNPCMain)	NPC Helper A	2280
+prontera,156,182,4	duplicate(DedicatedNPCMain)	NPC Helper B	2280
+prontera,158,182,4	duplicate(DedicatedNPCMain)	NPC Helper C	2280
