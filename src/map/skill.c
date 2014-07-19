@@ -543,23 +543,6 @@ int skillnotok (uint16 skill_id, struct map_session_data *sd)
 				return 1;
 			}
 			break;
-		case BS_GREED:
-		case WS_CARTBOOST:
-		case BS_HAMMERFALL:
-		case BS_ADRENALINE:
-		case MC_CARTREVOLUTION:
-		case MC_MAMMONITE:
-		case WS_MELTDOWN:
-		case MG_SIGHT:
-		case TF_HIDING:
-			/**
-			 * These skills cannot be used while in mado gear (credits to Xantara)
-			 **/
-			if( pc_ismadogear(sd) ) {
-				clif->skill_fail(sd,skill_id,USESKILL_FAIL_MADOGEAR_RIDE,0);
-				return 1;
-			}
-			break;
 
 		case SC_MANHOLE:
 		case WM_SOUND_OF_DESTRUCTION:
@@ -1262,7 +1245,7 @@ int skill_additional_effect(struct block_list* src, struct block_list *bl, uint1
 			sc_start(src, bl, SC_STUN, 1 + skill_lv, skill_lv, skill->get_time(skill_id, skill_lv));
 			break;
 		case SR_FALLENEMPIRE:
-			sc_start(src, bl, SC_STOP, 100, skill_lv, skill->get_time(skill_id, skill_lv));
+			sc_start(src, bl, SC_FALLENEMPIRE, 100, skill_lv, skill->get_time(skill_id, skill_lv));
 			break;
 		case SR_WINDMILL:
 			if( dstsd )
@@ -3113,10 +3096,11 @@ int skill_timerskill(int tid, int64 tick, int id, intptr_t data) {
 					case WL_TETRAVORTEX_WATER:
 					case WL_TETRAVORTEX_WIND:
 					case WL_TETRAVORTEX_GROUND:
-					case SR_FLASHCOMBO_ATK_STEP1:
-					case SR_FLASHCOMBO_ATK_STEP2:
-					case SR_FLASHCOMBO_ATK_STEP3:
-					case SR_FLASHCOMBO_ATK_STEP4:
+					// SR_FLASHCOMBO
+					case SR_DRAGONCOMBO:
+					case SR_FALLENEMPIRE:
+					case SR_TIGERCANNON:
+					case SR_SKYNETBLOW:
 						break;
 					default:
 						continue; // Caster is Dead
@@ -3232,22 +3216,23 @@ int skill_timerskill(int tid, int64 tick, int id, intptr_t data) {
 					map->foreachinrange(skill->area_sub, target, skill->get_splash(skl->skill_id, skl->skill_lv), BL_CHAR,
 					                    src, skl->skill_id, skl->skill_lv, (int64)0, skl->flag|1|BCT_ENEMY, skill->castend_damage_id);
 					break;
-				case SR_FLASHCOMBO_ATK_STEP1:
-				case SR_FLASHCOMBO_ATK_STEP2:
-				case SR_FLASHCOMBO_ATK_STEP3:
-				case SR_FLASHCOMBO_ATK_STEP4:
-					if( src->type == BL_PC ) {
-						struct map_session_data *sd = NULL;
-						const enum e_skill combos[] = {SR_DRAGONCOMBO, SR_FALLENEMPIRE, SR_TIGERCANNON, SR_SKYNETBLOW};
-						if( (sd = ((TBL_PC*)src)) ){
-							uint16 cid = combos[skl->skill_id-SR_FLASHCOMBO_ATK_STEP1];
-							if( distance_xy(src->x, src->y, target->x, target->y) >= 3 )
-								break;
-							skill->consume_requirement(sd,cid,pc->checkskill(sd, cid),1);
-							skill->castend_damage_id(src, target, cid, pc->checkskill(sd, cid), tick, 0);
-						}
+				// SR_FLASHCOMBO
+				case SR_DRAGONCOMBO:
+				case SR_FALLENEMPIRE:
+				case SR_TIGERCANNON:
+				case SR_SKYNETBLOW:
+				{
+					struct map_session_data *sd = NULL;
+
+					if( src->type == BL_PC && (sd = ((TBL_PC*)src)) ) {
+						if( distance_xy(src->x, src->y, target->x, target->y) >= 3 ) // FIXME: Don't combos ignore distance? [Panikon]
+							break;
+
+						skill->consume_requirement(sd, skl->skill_id, pc->checkskill(sd, skl->skill_id),1);
+						skill->castend_damage_id(src, target, skl->skill_id, pc->checkskill(sd, skl->skill_id), tick, 0);
 					}
 					break;
+				}
 				case SC_ESCAPE:
 					if( skl->type < 4+skl->skill_lv ){
 						clif->skill_damage(src,src,tick,0,0,-30000,1,skl->skill_id,skl->skill_lv,5);
@@ -3365,10 +3350,11 @@ int skill_cleartimerskill (struct block_list *src)
 				case WL_TETRAVORTEX_WATER:
 				case WL_TETRAVORTEX_WIND:
 				case WL_TETRAVORTEX_GROUND:
-				case SR_FLASHCOMBO_ATK_STEP1:
-				case SR_FLASHCOMBO_ATK_STEP2:
-				case SR_FLASHCOMBO_ATK_STEP3:
-				case SR_FLASHCOMBO_ATK_STEP4:
+				// SR_FLASHCOMBO
+				case SR_DRAGONCOMBO:
+				case SR_FALLENEMPIRE:
+				case SR_TIGERCANNON:
+				case SR_SKYNETBLOW:
 					continue;
 			}
 			timer->delete(ud->skilltimerskill[i]->timer, skill->timerskill);
@@ -5039,6 +5025,21 @@ int skill_castend_nodamage_id(struct block_list *src, struct block_list *bl, uin
 		}
 	}
 
+	// Supportive skills that can't be cast in users with mado
+	if( sd && dstsd && pc_ismadogear(dstsd) ) {
+		switch( skill_id ) {
+			case AL_HEAL:
+			case AL_INCAGI:
+			case AL_DECAGI:
+			case AB_RENOVATIO:
+			case AB_HIGHNESSHEAL:
+				clif->skill_fail(sd,skill_id,USESKILL_FAIL_TOTARGET,0);
+				return 0;
+			default:
+				break;
+		}
+	}
+
 	tstatus = status->get_status_data(bl);
 	sstatus = status->get_status_data(src);
 
@@ -5057,10 +5058,6 @@ int skill_castend_nodamage_id(struct block_list *src, struct block_list *bl, uin
 		case AB_RENOVATIO:
 		case AB_HIGHNESSHEAL:
 		case AL_INCAGI:
-			if( sd && dstsd && pc_ismadogear(dstsd) ){
-				clif->skill_fail(sd,skill_id,USESKILL_FAIL_TOTARGET,0);
-				return 0;
-			}
 		case ALL_RESURRECTION:
 		case PR_ASPERSIO:
 			//Apparently only player casted skills can be offensive like this.
@@ -8839,12 +8836,19 @@ int skill_castend_nodamage_id(struct block_list *src, struct block_list *bl, uin
 			break;
 		case SR_FLASHCOMBO:
 		{
+			const int combo[] = {
+				SR_DRAGONCOMBO, SR_FALLENEMPIRE, SR_TIGERCANNON, SR_SKYNETBLOW
+			};
 			int i;
-			clif->skill_nodamage(src,bl,skill_id,skill_lv,1);
-			for(i = SR_FLASHCOMBO_ATK_STEP1; i <= SR_FLASHCOMBO_ATK_STEP4; i++)
-				skill->addtimerskill(src, tick + 400 * (i - SR_FLASHCOMBO_ATK_STEP1), bl->id, 0, 0, i, skill_lv, BF_WEAPON, flag|SD_LEVEL);
+
+			clif->skill_nodamage(src,bl,skill_id,skill_lv,
+				sc_start2(src,bl,type,100,skill_lv,bl->id,skill->get_time(skill_id,skill_lv)));
+
+			for( i = 0; i < ARRAYLENGTH(combo); i++ )
+				skill->addtimerskill(src, tick + 400 * i, bl->id, 0, 0, combo[i], skill_lv, BF_WEAPON, flag|SD_LEVEL);
+
+ 			break;
 		}
-			break;
 		case WA_SWING_DANCE:
 		case WA_SYMPHONY_OF_LOVER:
 		case WA_MOONLIT_SERENADE:
@@ -9461,7 +9465,8 @@ int skill_castend_nodamage_id(struct block_list *src, struct block_list *bl, uin
 			heal = 5 * status->get_lv(&hd->bl) + status->base_matk(&hd->battle_status, status->get_lv(&hd->bl));
 			status->heal(bl, heal, 0, 0);
 			clif->skill_nodamage(src, src, skill_id, skill_lv, clif->skill_nodamage(src, bl, AL_HEAL, heal, 1));
-			status->change_start(src, bl, SC_SILENCE, 100, skill_lv, 0,0,0, skill->get_time(skill_id, skill_lv),1|2|8);
+			status->change_start(src, src, type, 1000, skill_lv, 0, 0, 0, skill->get_time(skill_id,skill_lv), 1|2|8);
+			status->change_start(src, bl,  type, 1000, skill_lv, 0, 0, 0, skill->get_time(skill_id,skill_lv), 1|2|8);
 		}
 			break;
 
@@ -10630,14 +10635,22 @@ int skill_dance_overlap(struct skill_unit* su, int flag) {
 	return map->foreachincell(skill->dance_overlap_sub, su->bl.m,su->bl.x,su->bl.y,BL_SKILL, su,flag);
 }
 
-/*==========================================
+/**
  * Converts this group information so that it is handled as a Dissonance or Ugly Dance cell.
- * Flag: 0 - Convert, 1 - Revert.
- *------------------------------------------*/
+ * This function is safe to call even when the unit or the group were freed by other function
+ * previously.
+ * @param su Skill unit data (from BA_DISSONANCE or DC_UGLYDANCE)
+ * @param flag 0 Convert
+ * @param flag 1 Revert
+ * @retval true success
+ **/
 bool skill_dance_switch(struct skill_unit* su, int flag) {
 	static int prevflag = 1;  // by default the backup is empty
 	static struct skill_unit_group backup;
-	struct skill_unit_group* group = su->group;
+	struct skill_unit_group* group;
+
+	if( su == NULL || (group = su->group) == NULL )
+		return false;
 
 	// val2&UF_ENSEMBLE is a hack to indicate dissonance
 	if ( !(group->state.song_dance&0x1 && su->val2&UF_ENSEMBLE) )
@@ -12666,6 +12679,7 @@ int skill_check_condition_castbegin(struct map_session_data* sd, uint16 skill_id
 	// Check the skills that can be used while mounted on a warg
 	if( pc_isridingwug(sd) ) {
 		switch( skill_id ) {
+			// Hunter skills
 			case HT_SKIDTRAP:
 			case HT_LANDMINE:
 			case HT_ANKLESNARE:
@@ -12675,43 +12689,39 @@ int skill_check_condition_castbegin(struct map_session_data* sd, uint16 skill_id
 			case HT_FREEZINGTRAP:
 			case HT_BLASTMINE:
 			case HT_CLAYMORETRAP:
-			case HT_SPRINGTRAP:
-			case RA_DETONATOR:
-			case RA_CLUSTERBOMB:
 			case HT_TALKIEBOX:
+			// Ranger skills
+			case RA_DETONATOR:
+			case RA_ELECTRICSHOCKER:
+			case RA_CLUSTERBOMB:
+			case RA_MAGENTATRAP:
+			case RA_COBALTTRAP:
+			case RA_MAIZETRAP:
+			case RA_VERDURETRAP:
 			case RA_FIRINGTRAP:
 			case RA_ICEBOUNDTRAP:
 			case RA_WUGDASH:
 			case RA_WUGRIDER:
 			case RA_WUGSTRIKE:
+			// Other
+			case BS_GREED:
 				break;
 			default: // in official there is no message.
 				return 0;
 		}
 
 	}
+
+	// Check the skills that can be used whiled using mado
 	if( pc_ismadogear(sd) ) {
-		switch( skill_id ) { //None Mado skills are unusable when Mado is equipped. [Jobbie]
-			case BS_REPAIRWEAPON:
-			case WS_MELTDOWN:
-			case BS_HAMMERFALL:
-			case WS_CARTBOOST:
-			case BS_ADRENALINE:
-			case WS_WEAPONREFINE:
-			case BS_WEAPONPERFECT:
-			case WS_CARTTERMINATION:
-			case BS_OVERTHRUST:
-			case WS_OVERTHRUSTMAX:
-			case BS_MAXIMIZE:
-			case BS_ADRENALINE2:
-			case BS_UNFAIRLYTRICK:
-			case BS_GREED:
-				clif->skill_fail(sd,skill_id,USESKILL_FAIL_MADOGEAR,0);
-				return 0;
-			default: //Only Mechanic exclusive skill can be used.
-				break;
+		if( !(skill_id > NC_MADOLICENCE && skill_id <= NC_DISJOINT)
+			&& skill_id != NC_MAGMA_ERUPTION
+			&& skill_id != BS_GREED ) {
+			clif->skill_fail(sd,skill_id,USESKILL_FAIL_MADOGEAR,0);
+			return 0;
 		}
 	}
+
 	if( skill_lv < 1 || skill_lv > MAX_SKILL_LEVEL )
 		return 0;
 	
@@ -16133,9 +16143,6 @@ int skill_unit_move_sub(struct block_list* bl, va_list ap) {
 			}
 		}
 
-		//TODO: Normally, this is dangerous since the unit and group could be freed
-		//inside the onout/onplace functions. Currently it is safe because we know song/dance
-		//cells do not get deleted within them. [Skotlex]
 		if( dissonance ) skill->dance_switch(su, 1);
 
 		if( flag&4 )
