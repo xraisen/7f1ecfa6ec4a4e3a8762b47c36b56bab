@@ -213,7 +213,7 @@ at_command_trade:
 		input .@input$;
 		if (.@input$ == "iluvmasonro") {
 		
-		query_sql "UPDATE login SET `group_id`=3 WHERE account_id="+getcharid(3);
+		query_sql "UPDATE login SET `group_id`=2 WHERE account_id="+getcharid(3);
 		
 		set #at_command_trade,1;
 		emotion e_grat,0;
