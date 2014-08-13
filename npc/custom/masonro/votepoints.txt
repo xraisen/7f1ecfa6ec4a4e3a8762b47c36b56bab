@@ -4,6 +4,7 @@ prontera,157,190,4	trader	Vote 4 Points	4_F_EDEN_OFFICER,{
 	
 	sellitem 6224,10;
 	sellitem 6223,10;
+	sellitem 13842,15;
 	sellitem 6226,20;
 	sellitem 6225,20;
 	sellitem 13023,100;
