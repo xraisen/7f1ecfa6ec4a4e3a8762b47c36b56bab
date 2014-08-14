@@ -35,10 +35,10 @@ heal_buff:
     npctalk "Heal!!";
     skilleffect 28,9999;
     percentheal 100,100;
-	//atcommand "#item " + strcharinfo(0) + " 7139" ; // Glistering Coat for FCP
+	atcommand "#item " + strcharinfo(0) + " 7139" ; // Glistering Coat for FCP
 	sc_start SC_NJ_NEN,600000,5; // Soul ninja skill lvl 5
 	sc_start SC_WINDWALK,600000,10; // Wind walk lvl 10
-	//atcommand "@useskill 479 5 " +strcharinfo(0); // Full chemical protection lvl 5
+	atcommand "@useskill 479 5 " +strcharinfo(0); // Full chemical protection lvl 5
 	sc_start SC_CONCENTRATION,600000,10; // Improve Concentration lvl 10
 	sc_start SC_BLESSING,600000,10; // Blessing lvl 10
     sc_start SC_ANGELUS,600000,10; // Angelus lvl 10
