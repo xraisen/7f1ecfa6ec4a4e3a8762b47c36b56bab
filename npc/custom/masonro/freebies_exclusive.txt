@@ -1,0 +1,66 @@
+new_1-1,58,118,4	script	Freebies Exclusive#1	4_F_KAFRA2,{
+cutin "kafra_02",2;
+mes "[^33ae1eFreebies Exclusive^000000]";
+mes "Hello " + strcharinfo(0) +"!";
+next;
+mes "[^33ae1eFreebies Exclusive^000000]";
+mes "We have a freebies exclusive to those who have registered before August 17, 2014. ^ff0000 1 Angra Manyu^000000 for 30 days.";
+next;
+mes "[^33ae1eFreebies Exclusive^000000]";
+mes "To claim the item, please enter your e-mail address:";
+next;
+input .@input$;
+
+set .@email_input$, .@input$;
+
+query_sql("select email from `reward081714` WHERE `email`='"+.@email_input$+"'", .@email$);
+
+mes "[^33ae1eFreebies Exclusive^000000]";
+mes "Verifying, please wait... ";
+mes " ";
+
+sleep2 2000;
+mes "NEXT...";
+next;
+
+if (!#reward081714) {
+	if (.@email_input$ == .@email$) {
+		mes "[^33ae1eFreebies Exclusive^000000]";
+		mes "Yes, that e-mail is listed. Please wait...";
+		mes " ";
+			
+		sleep2 2000;
+		mes "NEXT...";
+		next;
+		
+		query_sql("select email from `login` WHERE `account_id`='"+getcharid(3)+"'", .@email_mine$);
+		if (.@email$ == .@email_mine$) {
+			misceffect 709;
+			mes "[^33ae1eFreebies Exclusive^000000]";
+			mes "Congratulations!";
+			next;
+			mes "[^33ae1eFreebies Exclusive^000000]";
+			mes "Please enjoy your 30 days ^ff0000 1 Angra Manyu^000000!";
+			
+			rentitem 1599, 2592000;
+			set #reward081714, 1;
+			next;
+			mes "[^33ae1eFreebies Exclusive^000000]";
+			mes "Do you like ^ff0000MasonRO^000000? Please consider donating to get premium stuffs. Thank you!";
+		} else {
+			mes "[^33ae1eFreebies Exclusive^000000]";
+			mes "Sorry, but it's not the e-mail address you use to register. Please try again.";	
+		}
+
+	} else {
+	mes "[^33ae1eFreebies Exclusive^000000]";
+	mes "Sorry, but I cannot find your e-mail address on the list. Please try again.";
+	}
+} else {
+mes "[^33ae1eFreebies Exclusive^000000]";
+mes "You have already claimed your freebies. Please come back again soon for more fantastic freebies!";
+}
+
+close2;
+cutin "",255;
+}
