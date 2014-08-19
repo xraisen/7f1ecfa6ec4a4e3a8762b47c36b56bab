@@ -38,7 +38,7 @@ if(Zeny >= 20000) {
 	sc_start SC_NJ_NEN,600000,5; // Soul ninja skill lvl 5
 	sc_start SC_WINDWALK,600000,10; // Wind walk lvl 10
 	
-	if (getequipisequiped(EQI_HEAD_TOP) || getequipisequiped(EQI_ARMOR) || getequipisequiped(EQI_ACC_L)) {
+	if (getequipisequiped(EQI_HEAD_TOP) || getequipisequiped(EQI_ARMOR) || getequipisequiped(EQI_ACC_L) || getequipisequiped(EQI_ACC_R)) {
 		atcommand "#item " + strcharinfo(0) + " 7139" ; // Glistering Coat for FCP
 		atcommand "@useskill 479 5 " +strcharinfo(0); // Full chemical protection lvl 5
 	}
