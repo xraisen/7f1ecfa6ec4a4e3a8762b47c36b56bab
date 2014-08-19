@@ -44,7 +44,7 @@ ROTD:
 		
 		getitem 23000,5;
 		set #rotd_reward,1;
-		emotion e_grat,0;
+		misceffect 709;
 		goto Refiner;
 		
 	} else {
@@ -71,7 +71,7 @@ Refiner:
 		getitem 23101,5;
 		getitem 23102,5;
 		set #refiner_reward,1;
-		emotion e_grat,0;
+		misceffect 709;
 		goto Item_Mall;
 		
 	} else {
@@ -95,7 +95,7 @@ Item_Mall:
 		
 		set Zeny, Zeny + 500000;
 		set #Item_Mall_reward,1;
-		emotion e_grat,0;
+		misceffect 709;
 		goto Eden_Map;
 		
 	} else {
@@ -120,7 +120,7 @@ Eden_Map:
 		rentitem 1599,604800;
 		rentitem 2199,604800;		
 		set #Eden_Map_reward,1;
-		emotion e_grat,0;
+		misceffect 709;
 		goto Farm_zone;
 		
 	} else {
@@ -145,7 +145,7 @@ Farm_zone:
 		getitembound 607,20,1;
 		
 		set #Farm_zone_reward,1;
-		emotion e_grat,0;
+		misceffect 709;
 		goto custom_item;
 		
 	} else {
@@ -172,7 +172,7 @@ custom_item:
 		rentitem 30092,1296000;
 		
 		set #custom_item_reward,1;
-		emotion e_grat,0;
+		misceffect 709;
 		goto at_command_trade;
 		
 	} else {
@@ -216,7 +216,7 @@ at_command_trade:
 		query_sql "UPDATE login SET `group_id`=2 WHERE account_id="+getcharid(3);
 		
 		set #at_command_trade,1;
-		emotion e_grat,0;
+		misceffect 709;
 		goto end_freebies;
 		
 	} else {
@@ -242,7 +242,7 @@ end_freebies:
 	getitembound 13758,1,1;	 
 	getitembound 16683,1,1;
 	
-	emotion e_grat,0;	
+	misceffect 709;	
 	next;
 	mes "[^33ae1eMasonRO Assistant^000000]";
 	mes "Thank you! I am looking forward seeing you in-game.";
