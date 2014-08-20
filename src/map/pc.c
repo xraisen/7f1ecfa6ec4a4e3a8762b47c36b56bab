@@ -3922,16 +3922,23 @@ int pc_getzeny(struct map_session_data *sd,int zeny, enum e_log_pick_type type, 
 	return 0;
 }
 
-/*==========================================
- * Searching a specified itemid in inventory and return his stored index
- *------------------------------------------*/
-int pc_search_inventory(struct map_session_data *sd,int item_id)
-{
+/**
+ * Searches for the specified item ID in inventory and return its inventory index.
+ * 
+ * If the item is found, the returned value is guaranteed to be a valid index
+ * (non-negative, smaller than MAX_INVENTORY).
+ * 
+ * @param sd      Character to search on.
+ * @param item_id The item ID to search.
+ * @return the inventory index of the first instance of the requested item.
+ * @retval INDEX_NOT_FOUND if the item wasn't found.
+ */
+int pc_search_inventory(struct map_session_data *sd, int item_id) {
 	int i;
-	nullpo_retr(-1, sd);
+	nullpo_retr(INDEX_NOT_FOUND, sd);
 
 	ARR_FIND( 0, MAX_INVENTORY, i, sd->status.inventory[i].nameid == item_id && (sd->status.inventory[i].amount > 0 || item_id == 0) );
-	return ( i < MAX_INVENTORY ) ? i : -1;
+	return ( i < MAX_INVENTORY ) ? i : INDEX_NOT_FOUND;
 }
 
 /*==========================================
@@ -3940,11 +3947,11 @@ int pc_search_inventory(struct map_session_data *sd,int item_id)
         0 = success
         1 = invalid itemid not found or negative amount
         2 = overweight
-		3 = ?
+        3 = ?
         4 = no free place found
         5 = max amount reached
-		6 = ?
-		7 = stack limitation
+        6 = ?
+        7 = stack limitation
  *------------------------------------------*/
 int pc_additem(struct map_session_data *sd,struct item *item_data,int amount,e_log_pick_type log_type)
 {
@@ -4011,10 +4018,9 @@ int pc_additem(struct map_session_data *sd,struct item *item_data,int amount,e_l
 		}
 	}
 	
-	if( i >= MAX_INVENTORY )
-	{
+	if ( i >= MAX_INVENTORY ) {
 		i = pc->search_inventory(sd,0);
-		if( i < 0 )
+		if (i == INDEX_NOT_FOUND)
 			return 4;
 
 		memcpy(&sd->status.inventory[i], item_data, sizeof(sd->status.inventory[0]));
@@ -9148,28 +9154,50 @@ int pc_checkitem(struct map_session_data *sd)
 		for( i = 0; i < MAX_INVENTORY; i++ ) {
 			id = sd->status.inventory[i].nameid;
 
-			if( id && !itemdb_available(id) ) {
+			if (!id)
+				continue;
+
+			if( !itemdb_available(id) ) {
 				ShowWarning("Removed invalid/disabled item id %d from inventory (amount=%d, char_id=%d).\n", id, sd->status.inventory[i].amount, sd->status.char_id);
 				pc->delitem(sd, i, sd->status.inventory[i].amount, 0, 0, LOG_TYPE_OTHER);
+				continue;
 			}
+
+			if ( !sd->status.inventory[i].unique_id && !itemdb->isstackable(id) )
+				sd->status.inventory[i].unique_id = itemdb->unique_id(sd);
 		}
 
 		for( i = 0; i < MAX_CART; i++ ) {
 			id = sd->status.cart[i].nameid;
 
-			if( id && !itemdb_available(id) ) {
+			if (!id)
+				continue;
+
+			if( !itemdb_available(id) ) {
 				ShowWarning("Removed invalid/disabled item id %d from cart (amount=%d, char_id=%d).\n", id, sd->status.cart[i].amount, sd->status.char_id);
 				pc->cart_delitem(sd, i, sd->status.cart[i].amount, 0, LOG_TYPE_OTHER);
+				continue;
 			}
+
+			if ( !sd->status.cart[i].unique_id && !itemdb->isstackable(id) )
+				sd->status.cart[i].unique_id = itemdb->unique_id(sd);
 		}
 		
 		for( i = 0; i < MAX_STORAGE; i++ ) {
 			id = sd->status.storage.items[i].nameid;
+
+			if (!id)
+				continue;
+
 			if( id && !itemdb_available(id) ) {
 				ShowWarning("Removed invalid/disabled item id %d from storage (amount=%d, char_id=%d).\n", id, sd->status.storage.items[i].amount, sd->status.char_id);
 				storage->delitem(sd, i, sd->status.storage.items[i].amount);
-				storage->close(sd); // force closing
+				storage->close(sd);
+				continue;
 			}
+
+			if ( !sd->status.storage.items[i].unique_id && !itemdb->isstackable(id) )
+				sd->status.storage.items[i].unique_id = itemdb->unique_id(sd);
 		}
 		
 		if (sd->guild) {
@@ -9177,11 +9205,19 @@ int pc_checkitem(struct map_session_data *sd)
 			if (guild_storage) {
 				for( i = 0; i < MAX_GUILD_STORAGE; i++ ) {
 					id = guild_storage->items[i].nameid;
-					if( id && !itemdb_available(id) ) {
+
+					if (!id)
+						continue;
+
+					if( !itemdb_available(id) ) {
 						ShowWarning("Removed invalid/disabled item id %d from guild storage (amount=%d, char_id=%d, guild_id=%d).\n", id, guild_storage->items[i].amount, sd->status.char_id, sd->guild->guild_id);
 						gstorage->delitem(sd, guild_storage, i, guild_storage->items[i].amount);
 						gstorage->close(sd); // force closing
+						continue;
 					}
+
+					if (!guild_storage->items[i].unique_id && !itemdb->isstackable(id))
+						guild_storage->items[i].unique_id = itemdb->unique_id(sd);
 				}
 			}
 		}
