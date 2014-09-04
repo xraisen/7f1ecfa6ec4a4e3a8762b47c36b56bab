@@ -11013,20 +11013,14 @@ struct skill_unit_group* skill_unitsetting(struct block_list *src, uint16 skill_
 			val1 = 15+skill_lv+(st->int_/10); // MaxSP percent increase TO-DO: this INT bonus value is guessed
 			val2 = 20+3*skill_lv+(st->int_/10); // SP cost reduction
 			if(sd){
-				val1 += pc->checkskill(sd,DC_DANCINGLESSON); //TO-DO This bonus value is guessed
-				val2 += pc->checkskill(sd,DC_DANCINGLESSON); //TO-DO Should be half this value
+				val1 += (pc->checkskill(sd,DC_DANCINGLESSON) + 1) / 2;
+				val2 += (pc->checkskill(sd,DC_DANCINGLESSON) + 1) / 2;
 			}
 			break;
 		case BA_ASSASSINCROSS:
-#ifdef RENEWAL
 			val1 = 10 + skill_lv + (st->agi/10); // ASPD increase
 			if(sd)
-				val1 += 4*pc->checkskill(sd,BA_MUSICALLESSON);
-#else
-			val1 = 100+(10*skill_lv)+(st->agi/10); // ASPD increase
-			if(sd)
-				val1 += 5*pc->checkskill(sd,BA_MUSICALLESSON);
-#endif
+				val1 += (pc->checkskill(sd,BA_MUSICALLESSON) + 1) / 2;
 			break;
 		case DC_FORTUNEKISS:
 			val1 = 10+skill_lv+(st->luk/10); // Critical increase
