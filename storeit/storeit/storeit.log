@@ -1,4 +1,4 @@
-﻿Build started 8/21/2014 12:45:39 AM.
+﻿Build started 9/4/2014 10:04:04 PM.
      1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\storeit\storeit.vcxproj" on node 3 (build target(s)).
      1>InitializeBuildStatus:
          Creating "storeit\\storeit.unsuccessfulbuild" because "AlwaysCreate" was specified.
@@ -20,4 +20,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:06.60
+Time Elapsed 00:00:03.63
