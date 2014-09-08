@@ -1,3 +1,5 @@
 new_1-1,58,112,4	script	Mas	4_F_KAFRA1,{
 
+mes "Hello world! Welcome to the paradise!";
+close;
 }
