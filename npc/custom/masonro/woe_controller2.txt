@@ -497,7 +497,7 @@
 		}
 		end;
 }
-prontera,130,180,4	script	WOE Information	2_BOARD1,{
+prontera,149,193,4	script	WOE Information	2_BOARD1,{
 	if(getwaitingroomstate(3, strnpcinfo(3)) == -1)
 		donpcevent strnpcinfo(3)+"::OnInit";
 
