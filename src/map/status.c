@@ -1790,16 +1790,8 @@ int status_check_skilluse(struct block_list *src, struct block_list *target, uin
 	hide_flag = flag?OPTION_HIDE:(OPTION_HIDE|OPTION_CLOAK|OPTION_CHASEWALK);
 
 	//You cannot hide from ground skills.
-	if( skill->get_ele(skill_id,1) == ELE_EARTH ) //TODO: Need Skill Lv here :/
+	if( skill->get_ele(skill_id,1) == ELE_EARTH && skill_id != MG_STONECURSE)
 		hide_flag &= ~OPTION_HIDE;
-	else {
-		switch ( skill_id ) {
-			case MO_ABSORBSPIRITS: // it works when already casted and target suddenly hides.
-			case SA_DISPELL:
-				hide_flag &= ~OPTION_HIDE;
-				break;
-		}
-	}
 
 	switch( target->type ) {
 		case BL_PC: {
@@ -1810,6 +1802,7 @@ int status_check_skilluse(struct block_list *src, struct block_list *target, uin
 					return 0;
 				if( tsc ) {
 					if (tsc->option&hide_flag && !is_boss &&
+						!(flag&1 && skill->get_nk(skill_id)&NK_NO_DAMAGE) && // Buff/debuff skills that started casting before hiding still applies
 						((sd->special_state.perfect_hiding || !is_detect) ||
 						(tsc->data[SC_CLOAKINGEXCEED] && is_detect)))
 						return 0;
@@ -5402,7 +5395,25 @@ short status_calc_aspd(struct block_list *bl, struct status_change *sc, short fl
 			skills1 = 5;
 	}
 
-	if((sc->data[SC_BERSERK]) &&	skills1 < 15)
+	if( sc->data[SC_ASSNCROS] && skills1 < sc->data[SC_ASSNCROS]->val2){
+		if (bl->type!=BL_PC)
+			skills1 = sc->data[SC_ASSNCROS]->val2;
+		else
+			switch(((TBL_PC*)bl)->status.weapon)
+		{
+			case W_BOW:
+			case W_REVOLVER:
+			case W_RIFLE:
+			case W_GATLING:
+			case W_SHOTGUN:
+			case W_GRENADE:
+				break;
+			default:
+				skills1 = sc->data[SC_ASSNCROS]->val2;
+		}
+	}
+
+	if((sc->data[SC_BERSERK]) && skills1 < 15)
 		skills1 = 15;
 	else if(sc->data[SC_GS_MADNESSCANCEL] && skills1 < 20)
 		skills1 = 20;
@@ -5448,7 +5459,7 @@ short status_calc_aspd(struct block_list *bl, struct status_change *sc, short fl
 	if( sc->data[SC_PAIN_KILLER] )
 		skills2 -= sc->data[SC_PAIN_KILLER]->val2;
 
-	if( sc->data[SC_SWING] )
+	if( sc->data[SC_SWING] ) // TODO: SC_SWING shouldn't stack with skill1 modifiers
 		skills2 += sc->data[SC_SWING]->val3;
 	if( sc->data[SC_DANCE_WITH_WUG] )
 		skills2 += sc->data[SC_DANCE_WITH_WUG]->val3;
@@ -5464,23 +5475,7 @@ short status_calc_aspd(struct block_list *bl, struct status_change *sc, short fl
 		skills2 += sc->data[SC_GS_GATLINGFEVER]->val1;
 	if( sc->data[SC_STAR_COMFORT] )
 		skills2 += 3 * sc->data[SC_STAR_COMFORT]->val1;
-	if( sc->data[SC_ASSNCROS] && !skills1){
-		if (bl->type!=BL_PC)
-			skills2 += sc->data[SC_ASSNCROS]->val2;
-		else
-			switch(((TBL_PC*)bl)->status.weapon)
-		{
-			case W_BOW:
-			case W_REVOLVER:
-			case W_RIFLE:
-			case W_GATLING:
-			case W_SHOTGUN:
-			case W_GRENADE:
-				break;
-			default:
-				skills2 += sc->data[SC_ASSNCROS]->val2;
-		}
-	}
+	
 	return ( flag&1? (skills1 + pots) : skills2 );
 #else
 	return 0;
@@ -5569,7 +5564,8 @@ short status_calc_aspd_rate(struct block_list *bl, struct status_change *sc, int
 					max = sc->data[SC_ASSNCROS]->val2;
 			}
 		}
-		aspd_rate -= 10 * max; // let's multiply here for consistency
+
+		aspd_rate -= max;
 
 		if(sc->data[SC_BERSERK])
 			aspd_rate -= 300;
