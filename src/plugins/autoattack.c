@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../common/HPMi.h"
+#include "../common/timer.h"
 #include "../map/script.h"
 #include "../map/pc.h"
 #include "../map/map.h"
@@ -9,15 +10,17 @@
 #include "../map/atcommand.h"
 #include "../common/nullpo.h"
 
+#include "../common/HPMDataCheck.h"/* should always be the last file included! (if you don't make it last, it'll intentionally break compile time) */
+
 #define OPTION_AUTOATTACK 0x10000000
 
-#include "../common/HPMDataCheck.h"    //Should always be the last include file.
 
 /*
 1.0 Initial Release
 1.1 Fixed Not attacking issue
 1.2 Update compilation compatibility at rev. 13321 [Mhalicot]
 1.3 Restriction using @autoatk upon died and turn off when died.
+1.4 Fixed Compilation error. Rev. 145*** [Mhalicot]
 */
 HPExport struct hplugin_info pinfo = {
 	"autoattack",		// Plugin name

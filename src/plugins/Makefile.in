@@ -16,7 +16,7 @@
 #                                                                    #
 # Note: DO NOT include the .c extension!!!                           #
 
-MYPLUGINS = identifyall autobuyammo identifyall manners storeit whosell afk
+MYPLUGINS = identifyall autobuyammo identifyall manners storeit whosell afk autoattack
 
 #                                                                    #
 #########  DO NOT EDIT ANYTHING BELOW THIS LINE!!!  ##################
