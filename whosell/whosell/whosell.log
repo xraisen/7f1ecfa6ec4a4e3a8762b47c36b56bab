@@ -1,5 +1,5 @@
-﻿Build started 9/4/2014 10:04:04 PM.
-     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\whosell\whosell.vcxproj" on node 2 (build target(s)).
+﻿Build started 9/15/2014 2:34:56 PM.
+     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\whosell\whosell.vcxproj" on node 2 (rebuild target(s)).
      1>InitializeBuildStatus:
          Creating "whosell\\whosell.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
@@ -40,8 +40,8 @@
        FinalizeBuildStatus:
          Deleting file "whosell\\whosell.unsuccessfulbuild".
          Touching "whosell\\whosell.lastbuildstate".
-     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\whosell\whosell.vcxproj" (build target(s)).
+     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\whosell\whosell.vcxproj" (rebuild target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:03.71
+Time Elapsed 00:00:01.87

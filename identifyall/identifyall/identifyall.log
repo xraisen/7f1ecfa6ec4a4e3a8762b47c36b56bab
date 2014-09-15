@@ -1,5 +1,5 @@
-﻿Build started 9/4/2014 10:04:11 PM.
-     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\identifyall\identifyall.vcxproj" on node 3 (build target(s)).
+﻿Build started 9/15/2014 2:35:00 PM.
+     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\identifyall\identifyall.vcxproj" on node 3 (rebuild target(s)).
      1>InitializeBuildStatus:
          Creating "identifyall\\identifyall.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
@@ -16,8 +16,8 @@
        FinalizeBuildStatus:
          Deleting file "identifyall\\identifyall.unsuccessfulbuild".
          Touching "identifyall\\identifyall.lastbuildstate".
-     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\identifyall\identifyall.vcxproj" (build target(s)).
+     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\identifyall\identifyall.vcxproj" (rebuild target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:03.71
+Time Elapsed 00:00:01.76
