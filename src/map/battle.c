@@ -500,8 +500,13 @@ int64 battle_calc_weapon_damage(struct block_list *src, struct block_list *bl, u
 int64 battle_calc_base_damage(struct block_list *src, struct block_list *bl, uint16 skill_id, uint16 skill_lv, int nk, bool n_ele, short s_ele, short s_ele_, int type, int flag, int flag2) {
 	int64 damage, batk;
 	struct status_data *st = status->get_status_data(src);
-	
-	batk = battle->calc_elefix(src, bl, skill_id, skill_lv, status->calc_batk(bl, status->get_sc(src), st->batk, false), nk, n_ele, ELE_NEUTRAL, ELE_NEUTRAL, false, flag);
+	struct status_change *sc = status->get_sc(src);
+
+	// Property from mild wind bypasses it
+	if (sc && sc->data[SC_TK_SEVENWIND])
+		batk = battle->calc_elefix(src, bl, skill_id, skill_lv, status->calc_batk(bl, sc, st->batk, false), nk, n_ele, s_ele, s_ele_, false, flag);
+	else
+		batk = battle->calc_elefix(src, bl, skill_id, skill_lv, status->calc_batk(bl, sc, st->batk, false), nk, n_ele, ELE_NEUTRAL, ELE_NEUTRAL, false, flag);
 
 	if( type == EQI_HAND_L )
 		damage = batk + 3 * battle->calc_weapon_damage(src, bl, skill_id, skill_lv, &st->lhw, nk, n_ele, s_ele, s_ele_, status_get_size(bl), type, flag, flag2) / 4;
@@ -2197,12 +2202,12 @@ int battle_calc_skillratio(int attack_type, struct block_list *src, struct block
 					break;
 				case NC_VULCANARM:
 					skillratio = 70 * skill_lv + status_get_dex(src);
-					RE_LVL_DMOD(100);
+					RE_LVL_DMOD(120);
 					break;
 				case NC_FLAMELAUNCHER:
 				case NC_COLDSLOWER:
-					skillratio += 200 + 100 * skill_lv + status_get_str(src);
-					RE_LVL_DMOD(100);
+					skillratio += 200 + 300 * skill_lv;
+					RE_LVL_DMOD(150);
 					break;
 				case NC_ARMSCANNON:
 					switch( tst->size ) {
@@ -2233,13 +2238,16 @@ int battle_calc_skillratio(int attack_type, struct block_list *src, struct block
 						skillratio = skillratio * 75 / 100;
 					break;
 				case SC_FATALMENACE:
-					skillratio = 100 * (skill_lv+1) * status->get_lv(src) / 100;
+					skillratio = 100 * (skill_lv+1);
+					RE_LVL_DMOD(100);
 					break;
 				case SC_TRIANGLESHOT:
-					skillratio = ( 300 + (skill_lv-1) * status_get_agi(src)/2 ) * status->get_lv(src) / 120;
+					skillratio = ( 300 + (skill_lv-1) * status_get_agi(src)/2 );
+					RE_LVL_DMOD(120);
 					break;
 				case SC_FEINTBOMB:
-					skillratio = (skill_lv+1) * (st->dex/2) * (sd?sd->status.job_level:50)/10 * status->get_lv(src) / 120;
+					skillratio = (skill_lv+1) * (st->dex/2) * (sd?sd->status.job_level:50)/10;
+					RE_LVL_DMOD(120);
 					break;
 				case LG_CANNONSPEAR:
 					skillratio = (50 + st->str) * skill_lv;
@@ -2307,7 +2315,14 @@ int battle_calc_skillratio(int attack_type, struct block_list *src, struct block
 					RE_LVL_DMOD(100);
 					break;
 				case LG_HESPERUSLIT:
-					skillratio += 120 * skill_lv - 100;
+					skillratio = 120 * skill_lv;
+					if( sc && sc->data[SC_BANDING] )
+						skillratio += 200 * sc->data[SC_BANDING]->val2;
+					if( sc && sc->data[SC_BANDING] && sc->data[SC_BANDING]->val2 > 5 )
+						skillratio = skillratio * 150 / 100;
+					if( sc && sc->data[SC_INSPIRATION] )
+						skillratio += 600;
+					RE_LVL_DMOD(100);
 					break;
 				case SR_DRAGONCOMBO:
 					skillratio += 40 * skill_lv;
@@ -2797,7 +2812,11 @@ int64 battle_calc_damage(struct block_list *src,struct block_list *bl,struct Dam
 		}
 
 		//Now damage increasing effects
-		if( sc->data[SC_LEXAETERNA] && skill_id != PF_SOULBURN )
+		if( sc->data[SC_LEXAETERNA] && skill_id != PF_SOULBURN
+#ifdef RENEWAL
+		&& skill_id != CR_ACIDDEMONSTRATION && skill_id != ASC_BREAKER
+#endif
+		)
 		{
 			if( src->type != BL_MER || skill_id == 0 )
 				damage <<= 1; // Lex Aeterna only doubles damage of regular attacks from mercenaries
@@ -3762,6 +3781,10 @@ struct Damage battle_calc_misc_attack(struct block_list *src,struct block_list *
 					md.damage >>= 1;
 			}
 			md.damage -= totaldef;
+			if( tsc && tsc->data[SC_LEXAETERNA] ) {
+				md.damage <<= 1;
+				status_change_end(target, SC_LEXAETERNA, INVALID_TIMER);
+			}
 		}
 #else
 		// updated the formula based on a Japanese formula found to be exact [Reddozen]
@@ -3816,6 +3839,10 @@ struct Damage battle_calc_misc_attack(struct block_list *src,struct block_list *
 			ratio >>= 1;
 		md.damage = (matk + atk) * ratio / 100;
 		md.damage -= totaldef;
+		if( tsc && tsc->data[SC_LEXAETERNA] ) {
+				md.damage <<= 1;
+				status_change_end(target, SC_LEXAETERNA, INVALID_TIMER);
+			}
 #endif
 		}
 		break;
@@ -4176,6 +4203,12 @@ struct Damage battle_calc_weapon_attack(struct block_list *src,struct block_list
 			case LK_SPIRALPIERCE:
 				if (!sd) wd.flag=(wd.flag&~(BF_RANGEMASK|BF_WEAPONMASK))|BF_LONG|BF_MISC;
 				break;
+
+			//When in banding, the number of hits is equal to the number of Royal Guards in banding.
+			case LG_HESPERUSLIT:
+				if( sc && sc->data[SC_BANDING] && sc->data[SC_BANDING]->val2 > 3 )
+					wd.div_ = sc->data[SC_BANDING]->val2;
+				break;
 				
 			case MO_INVESTIGATE:
 				flag.pdef = flag.pdef2 = 2;
@@ -4227,6 +4260,10 @@ struct Damage battle_calc_weapon_attack(struct block_list *src,struct block_list
 		case LK_SPIRALPIERCE:
 			if (!sd) n_ele = false; //forced neutral for monsters
 			break;
+		case LG_HESPERUSLIT:
+			if ( sc && sc->data[SC_BANDING] && sc->data[SC_BANDING]->val2 == 5 )
+				s_ele = ELE_HOLY;	// Banding with 5 RGs: change atk element to Holy.
+		break;
 	}
 
 	if (!(nk & NK_NO_ELEFIX) && !n_ele)
@@ -5424,7 +5461,7 @@ void battle_reflect_damage(struct block_list *target, struct block_list *src, st
 
 		if( wd->dmg_lv >= ATK_BLOCK ) {/* yes block still applies, somehow gravity thinks it makes sense. */
 			if( sc ) {
-				if( sc->data[SC_REFLECTSHIELD] && skill_id != WS_CARTTERMINATION ) {
+				if( sc->data[SC_REFLECTSHIELD] && skill_id != WS_CARTTERMINATION && skill_id != GS_DESPERADO ) {
 					NORMALIZE_RDAMAGE(damage * sc->data[SC_REFLECTSHIELD]->val2 / 100);
 
 #ifndef RENEWAL
@@ -6733,6 +6770,7 @@ static const struct battle_data {
 	{ "mail_show_status",                   &battle_config.mail_show_status,                0,      0,      2,              },
 	{ "client_limit_unit_lv",               &battle_config.client_limit_unit_lv,            0,      0,      BL_ALL,         },
 	{ "client_emblem_max_blank_percent",    &battle_config.client_emblem_max_blank_percent, 100,    0,      100,            },
+	{ "song_timer_reset",                   &battle_config.song_timer_reset,                0,      0,      1,              },
 	// BattleGround Settings
 	{ "bg_update_interval",                 &battle_config.bg_update_interval,              1000,   100,    INT_MAX,        },
 	{ "bg_flee_penalty",                    &battle_config.bg_flee_penalty,                 20,     0,      INT_MAX,        },
