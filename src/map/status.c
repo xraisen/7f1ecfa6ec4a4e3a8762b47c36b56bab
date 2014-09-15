@@ -677,7 +677,6 @@ void initChangeTables(void) {
 	set_sc_with_vfx( SO_DIAMONDDUST       , SC_COLD      , SI_COLD   , SCB_NONE ); // it does show the snow icon on mobs but doesn't affect it.
 	set_sc( SO_CLOUD_KILL        , SC_POISON          , SI_CLOUDKILL       , SCB_NONE );
 	set_sc( SO_STRIKING          , SC_STRIKING        , SI_STRIKING        , SCB_WATK|SCB_CRI );
-	set_sc( SO_WARMER            , SC_WARMER          , SI_WARMER          , SCB_NONE );
 	set_sc( SO_VACUUM_EXTREME    , SC_VACUUM_EXTREME  , SI_VACUUM_EXTREME  , SCB_NONE );
 	set_sc( SO_ARRULLO           , SC_DEEP_SLEEP       , SI_DEEPSLEEP       , SCB_NONE );
 	set_sc( SO_FIRE_INSIGNIA     , SC_FIRE_INSIGNIA   , SI_FIRE_INSIGNIA   , SCB_MATK | SCB_BATK | SCB_WATK | SCB_ATK_ELE | SCB_REGEN );
@@ -1004,6 +1003,7 @@ void initChangeTables(void) {
 	status->ChangeFlagTable[SC_REBOUND] |= SCB_SPEED|SCB_REGEN;
 	status->ChangeFlagTable[SC_DEFSET] |= SCB_DEF|SCB_DEF2;
 	status->ChangeFlagTable[SC_MDEFSET] |= SCB_MDEF|SCB_MDEF2;
+	status->ChangeFlagTable[SC_MYSTERIOUS_POWDER] |= SCB_MAXHP;
 
 	status->ChangeFlagTable[SC_ALL_RIDING] = SCB_SPEED;
 	status->ChangeFlagTable[SC_WEDDING] = SCB_SPEED;
@@ -4584,7 +4584,7 @@ unsigned short status_calc_watk(struct block_list *bl, struct status_change *sc,
 		watk += sc->data[SC_SHIELDSPELL_DEF]->val2;
 	if(sc->data[SC_INSPIRATION])
 		watk += sc->data[SC_INSPIRATION]->val2;
-	if( sc->data[SC_BANDING] && sc->data[SC_BANDING]->val2 > 0 )
+	if( sc->data[SC_BANDING] && sc->data[SC_BANDING]->val2 > 1 )
 		watk += (10 + 10 * sc->data[SC_BANDING]->val1) * (sc->data[SC_BANDING]->val2);
 	if( sc->data[SC_TROPIC_OPTION] )
 		watk += sc->data[SC_TROPIC_OPTION]->val2;
@@ -4677,8 +4677,6 @@ unsigned short status_calc_matk(struct block_list *bl, struct status_change *sc,
 
 	if( !viewable ){
 		/* some statuses that are hidden in the status window */
-		if (sc->data[SC_MINDBREAKER])
-			matk += matk * sc->data[SC_MINDBREAKER]->val2/100;
 		return (unsigned short)cap_value(matk,0,USHRT_MAX);
 	}
 
@@ -4703,6 +4701,8 @@ unsigned short status_calc_matk(struct block_list *bl, struct status_change *sc,
 	if (sc->data[SC_IZAYOI])
 		matk += 25 * sc->data[SC_IZAYOI]->val1;
 #endif
+	if (sc->data[SC_MINDBREAKER])
+		matk += matk * sc->data[SC_MINDBREAKER]->val2/100;
 	if( sc->data[SC_ZANGETSU] )
 		matk += sc->data[SC_ZANGETSU]->val3;
 	if (sc->data[SC_MAGICPOWER] && sc->data[SC_MAGICPOWER]->val4)
@@ -5040,7 +5040,7 @@ signed short status_calc_def2(struct block_list *bl, struct status_change *sc, i
 		return 0;
 	if(sc->data[SC_SUN_COMFORT])
 		def2 += sc->data[SC_SUN_COMFORT]->val2;
-	if( sc->data[SC_BANDING] && sc->data[SC_BANDING]->val2 > 0 )
+	if( sc->data[SC_BANDING] && sc->data[SC_BANDING]->val2 > 1 )
 		def2 += (5 + sc->data[SC_BANDING]->val1) * (sc->data[SC_BANDING]->val2);
 	if(sc->data[SC_ANGELUS])
 #ifdef RENEWAL //in renewal only the VIT stat bonus is boosted by angelus
@@ -6332,12 +6332,6 @@ int status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_typ
 		case SC_QUAGMIRE:
 		case SC_NJ_SUITON:
 		case SC_SWING:
-		case SC__ENERVATION:
-		case SC__GROOMY:
-		case SC__IGNORANCE:
-		case SC__LAZINESS:
-		case SC__UNLUCKY:
-		case SC__WEAKNESS:
 			return 0;
 		}
 
@@ -6377,9 +6371,7 @@ int status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_typ
 	case SC_STUN:
 		sc_def = st->vit*100;
 		sc_def2 = st->luk*10 + SCDEF_LVL_DIFF(bl, src, 99, 10);
-#ifdef RENEWAL
 		tick_def2 = st->luk*10;
-#endif
 		break;
 	case SC_POISON:
 	case SC_DPOISON:
@@ -6399,24 +6391,29 @@ int status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_typ
 #ifdef RENEWAL
 		sc_def = st->int_*100;
 		sc_def2 = (st->vit + st->luk) * 5 + SCDEF_LVL_DIFF(bl, src, 99, 10);
-		tick_def2 = st->luk * 10;
 #else
 		sc_def = st->vit*100;
 		sc_def2 = st->luk*10 + SCDEF_LVL_DIFF(bl, src, 99, 10);
 #endif
+		tick_def2 = st->luk * 10;
 		break;
 	case SC_BLOODING:
 #ifdef RENEWAL
 		sc_def = st->agi*100;
-		tick_def2 = st->luk*10;
 #else
 		sc_def = st->vit*100;
 #endif
 		sc_def2 = st->luk*10 + SCDEF_LVL_DIFF(bl, src, 99, 10);
+		tick_def2 = st->luk*10;
 		break;
 	case SC_SLEEP:
+#ifdef RENEWAL
+		sc_def = st->agi*100;
+		sc_def2 = (st->int_ + st->luk) * 5 + SCDEF_LVL_DIFF(bl, src, 99, 10);
+#else
 		sc_def = st->int_*100;
 		sc_def2 = st->luk*10 + SCDEF_LVL_DIFF(bl, src, 99, 10);
+#endif
 		tick_def2 = st->luk*10;
 		break;
 	case SC_DEEP_SLEEP:
@@ -6430,7 +6427,6 @@ int status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_typ
 		sc_def = st->mdef*100;
 #ifndef RENEWAL
 		sc_def2 = st->luk*10;
-		tick_def2 = 0; //No duration reduction
 #endif
 		tick_def = 0; //No duration reduction
 		break;
@@ -6448,11 +6444,6 @@ int status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_typ
 		// Special property: immunity when luk is zero
 		if (st->luk == 0)
 			return 0;
-#ifndef RENEWAL
-		// Special property: immunity when luk is greater than level
-		if (st->luk > status->get_lv(bl))
-			return 0;
-#endif
 		sc_def = st->luk*100;
 		sc_def2 = st->luk*10 + SCDEF_LVL_DIFF(NULL, src, 99, 10); // Curse only has a level penalty and no resistance
 		tick_def = st->vit*100;
@@ -6715,7 +6706,8 @@ void status_display_remove(struct map_session_data *sd, enum sc_type type) {
 * &1: Cannot be avoided (it has to start)
 * &2: Tick should not be reduced (by vit, luk, lv, etc)
 * &4: sc_data loaded, no value has to be altered.
-* &8: SI will not be sent to the client
+* &8: rate should not be reduced (not evaluated here, but in some calls to other functions)
+* &16: SI will not be sent to the client
 *------------------------------------------*/
 int status_change_start(struct block_list *src, struct block_list *bl, enum sc_type type, int rate, int val1, int val2, int val3, int val4, int tick, int flag) {
 	struct map_session_data *sd = NULL;
@@ -7528,10 +7520,10 @@ int status_change_start(struct block_list *src, struct block_list *bl, enum sc_t
 						int i;
 						for( i = 0; i < 5; i++ ) {
 							if( sd->devotion[i] && (tsd = map->id2sd(sd->devotion[i])) )
-								status->change_start(bl, &tsd->bl, type, 10000, val1, val2, val3, val4, tick, 9);
+								status->change_start(bl, &tsd->bl, type, 10000, val1, val2, val3, val4, tick, 17);
 						}
 					} else if( bl->type == BL_MER && ((TBL_MER*)bl)->devotion_flag && (tsd = ((TBL_MER*)bl)->master) )
-						status->change_start(bl, &tsd->bl, type, 10000, val1, val2, val3, val4, tick, 9);
+						status->change_start(bl, &tsd->bl, type, 10000, val1, val2, val3, val4, tick, 17);
 				}
 				//val4 signals infinite endure (if val4 == 2 it is infinite endure from Berserk)
 				if( val4 )
@@ -7625,10 +7617,10 @@ int status_change_start(struct block_list *src, struct block_list *bl, enum sc_t
 						int i;
 						for( i = 0; i < 5; i++ ) {
 							if( sd->devotion[i] && (tsd = map->id2sd(sd->devotion[i])) )
-								status->change_start(bl, &tsd->bl, type, 10000, val1, val2, 0, 0, tick, 9);
+								status->change_start(bl, &tsd->bl, type, 10000, val1, val2, 0, 0, tick, 17);
 						}
 					} else if( bl->type == BL_MER && ((TBL_MER*)bl)->devotion_flag && (tsd = ((TBL_MER*)bl)->master) )
-						status->change_start(bl, &tsd->bl, type, 10000, val1, val2, 0, 0, tick, 9);
+						status->change_start(bl, &tsd->bl, type, 10000, val1, val2, 0, 0, tick, 17);
 				}
 				break;
 			case SC_NOEQUIPWEAPON:
@@ -7883,11 +7875,11 @@ int status_change_start(struct block_list *src, struct block_list *bl, enum sc_t
 						if( sd ) {
 							for( i = 0; i < 5; i++ ) {
 								if( sd->devotion[i] && (tsd = map->id2sd(sd->devotion[i])) )
-									status->change_start(bl, &tsd->bl, type, 10000, val1, val2, 0, 0, tick, 9);
+									status->change_start(bl, &tsd->bl, type, 10000, val1, val2, 0, 0, tick, 17);
 							}
 						}
 						else if( bl->type == BL_MER && ((TBL_MER*)bl)->devotion_flag && (tsd = ((TBL_MER*)bl)->master) )
-							status->change_start(bl, &tsd->bl, type, 10000, val1, val2, 0, 0, tick, 9);
+							status->change_start(bl, &tsd->bl, type, 10000, val1, val2, 0, 0, tick, 17);
 					}
 				}
 				break;
@@ -8031,7 +8023,7 @@ int status_change_start(struct block_list *src, struct block_list *bl, enum sc_t
 					while( i >= 0 ) {
 						type2 = types[i];
 						if( d_sc->data[type2] )
-							status->change_start(bl, bl, type2, 10000, d_sc->data[type2]->val1, 0, 0, 0, skill->get_time(status->sc2skill(type2),d_sc->data[type2]->val1), (type2 != SC_DEFENDER) ? 8 : 0);
+							status->change_start(bl, bl, type2, 10000, d_sc->data[type2]->val1, 0, 0, 0, skill->get_time(status->sc2skill(type2),d_sc->data[type2]->val1), (type2 != SC_DEFENDER) ? 16 : 0);
 						i--;
 					}
 				}
@@ -8430,7 +8422,7 @@ int status_change_start(struct block_list *src, struct block_list *bl, enum sc_t
 				tick_time = 4000; // [GodLesZ] tick time
 				break;
 			case SC_PYREXIA:
-				status->change_start(src, bl,SC_BLIND,10000,val1,0,0,0,30000,3); // Blind status that last for 30 seconds
+				status->change_start(src, bl,SC_BLIND,10000,val1,0,0,0,30000,11); // Blind status that last for 30 seconds
 				val4 = tick / 3000;
 				tick_time = 3000; // [GodLesZ] tick time
 				break;
@@ -8749,7 +8741,7 @@ int status_change_start(struct block_list *src, struct block_list *bl, enum sc_t
 				struct block_list * src2;
 				val3 = st->agi * val1 / 60; // ASPD increase: [(Target AGI x Skill Level) / 60] %
 				if( (src2 = map->id2bl(val2)) ){
-					val4 = ( 200/status_get_int(src2) ) * val1;// MDEF decrease: MDEF [(200 / Caster INT) x Skill Level]
+					val4 = ( 200/status_get_int(src2)?status_get_int(src2):1 ) * val1;// MDEF decrease: MDEF [(200 / Caster INT) x Skill Level]
 					val2 = ( status_get_dex(src2)/4 + status_get_str(src2)/2 ) * val1 / 5; // ATK increase: ATK [{(Caster DEX / 4) + (Caster STR / 2)} x Skill Level / 5]
 				}
 			}
@@ -9440,7 +9432,7 @@ int status_change_start(struct block_list *src, struct block_list *bl, enum sc_t
 		calc_flag&=~SCB_DYE;
 	}
 
-	if(!(flag&8) && !(flag&4 && status->DisplayType[type]))
+	if(!(flag&16) && !(flag&4 && status->DisplayType[type]))
 		clif->status_change(bl,status->IconChangeTable[type],1,tick,(val_flag&1)?val1:1,(val_flag&2)?val2:0,(val_flag&4)?val3:0);
 
 	/**
@@ -11633,7 +11625,7 @@ int status_change_spread( struct block_list *src, struct block_list *bl ) {
 			data.val2 = sc->data[i]->val2;
 			data.val3 = sc->data[i]->val3;
 			data.val4 = sc->data[i]->val4;
-			status->change_start(src,bl,(sc_type)i,10000,data.val1,data.val2,data.val3,data.val4,data.tick,1|2);
+			status->change_start(src,bl,(sc_type)i,10000,data.val1,data.val2,data.val3,data.val4,data.tick,1|2|8);
 			flag = 1;
 		}
 	}
