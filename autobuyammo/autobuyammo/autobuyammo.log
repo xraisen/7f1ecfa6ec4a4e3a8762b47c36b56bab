@@ -1,5 +1,5 @@
-﻿Build started 9/15/2014 2:35:00 PM.
-     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autobuyammo\autobuyammo.vcxproj" on node 2 (rebuild target(s)).
+﻿Build started 9/17/2014 12:01:22 PM.
+     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autobuyammo\autobuyammo.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "autobuyammo\\autobuyammo.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
@@ -16,8 +16,8 @@
        FinalizeBuildStatus:
          Deleting file "autobuyammo\\autobuyammo.unsuccessfulbuild".
          Touching "autobuyammo\\autobuyammo.lastbuildstate".
-     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autobuyammo\autobuyammo.vcxproj" (rebuild target(s)).
+     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autobuyammo\autobuyammo.vcxproj" (build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:02.07
+Time Elapsed 00:00:02.49
