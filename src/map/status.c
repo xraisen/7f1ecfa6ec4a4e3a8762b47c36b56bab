@@ -677,6 +677,7 @@ void initChangeTables(void) {
 	set_sc_with_vfx( SO_DIAMONDDUST       , SC_COLD      , SI_COLD   , SCB_NONE ); // it does show the snow icon on mobs but doesn't affect it.
 	set_sc( SO_CLOUD_KILL        , SC_POISON          , SI_CLOUDKILL       , SCB_NONE );
 	set_sc( SO_STRIKING          , SC_STRIKING        , SI_STRIKING        , SCB_WATK|SCB_CRI );
+	add_sc( SO_WARMER            , SC_WARMER          ); // At the moment, no icon on officials
 	set_sc( SO_VACUUM_EXTREME    , SC_VACUUM_EXTREME  , SI_VACUUM_EXTREME  , SCB_NONE );
 	set_sc( SO_ARRULLO           , SC_DEEP_SLEEP       , SI_DEEPSLEEP       , SCB_NONE );
 	set_sc( SO_FIRE_INSIGNIA     , SC_FIRE_INSIGNIA   , SI_FIRE_INSIGNIA   , SCB_MATK | SCB_BATK | SCB_WATK | SCB_ATK_ELE | SCB_REGEN );
@@ -1789,7 +1790,8 @@ int status_check_skilluse(struct block_list *src, struct block_list *target, uin
 	//If targeting, cloak+hide protect you, otherwise only hiding does.
 	hide_flag = flag?OPTION_HIDE:(OPTION_HIDE|OPTION_CLOAK|OPTION_CHASEWALK);
 
-	//You cannot hide from ground skills.
+	// There is no NF for ground skills, but every earth type skill out there
+	// affects hidding except Stone Curse
 	if( skill->get_ele(skill_id,1) == ELE_EARTH && skill_id != MG_STONECURSE)
 		hide_flag &= ~OPTION_HIDE;
 
@@ -2162,7 +2164,7 @@ int status_calc_mob_(struct mob_data* md, enum e_status_calc_opt opt) {
 
 	if (flag&2 && battle_config.mob_size_influence) {
 		// change for sized monsters [Valaris]
-		if (md->special_state.size==SZ_SMALL) {
+		if (md->special_state.size==SZ_MEDIUM) {
 			mstatus->max_hp>>=1;
 			mstatus->max_sp>>=1;
 			if (!mstatus->max_hp) mstatus->max_hp = 1;
@@ -2468,7 +2470,7 @@ int status_calc_pc_(struct map_session_data* sd, enum e_status_calc_opt opt) {
 	//Give them all modes except these (useful for clones)
 	bstatus->mode = MD_MASK&~(MD_BOSS|MD_PLANT|MD_DETECTOR|MD_ANGRY|MD_TARGETWEAK);
 
-	bstatus->size = (sd->class_&JOBL_BABY)?SZ_MEDIUM:SZ_SMALL;
+	bstatus->size = (sd->class_&JOBL_BABY)?SZ_SMALL:SZ_MEDIUM;
 	if (battle_config.character_size && (pc_isriding(sd) || pc_isridingdragon(sd)) ) { //[Lupus]
 		if (sd->class_&JOBL_BABY) {
 			if (battle_config.character_size&SZ_BIG)
@@ -3999,8 +4001,12 @@ void status_calc_bl_(struct block_list *bl, enum scb_flag flag, enum e_status_ca
 	if( bl->type == BL_PET )
 		return; // pets are not affected by statuses
 
-	if( opt&SCO_FIRST && bl->type == BL_MOB )
+	if( opt&SCO_FIRST && bl->type == BL_MOB ) {
+#ifdef RENEWAL
+		status->update_matk(bl); // Otherwise, the mob will spawn with lower MATK values
+#endif
 		return; // assume there will be no statuses active
+	}
 
 	status->calc_bl_main(bl, flag);
 
@@ -6703,11 +6709,11 @@ void status_display_remove(struct map_session_data *sd, enum sc_type type) {
 * 'rate' = base success rate. 10000 = 100%
 * 'tick' is base duration
 * 'flag':
-* &1: Cannot be avoided (it has to start)
-* &2: Tick should not be reduced (by vit, luk, lv, etc)
-* &4: sc_data loaded, no value has to be altered.
-* &8: rate should not be reduced (not evaluated here, but in some calls to other functions)
-* &16: SI will not be sent to the client
+* &1 : Cannot be avoided (it has to start)
+* &2 : Tick should not be reduced (by vit, luk, lv, etc)
+* &4 : sc_data loaded, no value has to be altered.
+* &8 : rate should not be reduced (not evaluated here, but in some calls to other functions)
+* &16: Status icon (SI) should not be send
 *------------------------------------------*/
 int status_change_start(struct block_list *src, struct block_list *bl, enum sc_type type, int rate, int val1, int val2, int val3, int val4, int tick, int flag) {
 	struct map_session_data *sd = NULL;
