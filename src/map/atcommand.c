@@ -1915,11 +1915,11 @@ ACMD(monster)
 		number = battle_config.atc_spawn_quantity_limit;
 	
 	if (strcmpi(info->command, "monstersmall") == 0)
-		size = SZ_SMALL;
+		size = SZ_MEDIUM;
 	else if (strcmpi(info->command, "monsterbig") == 0)
 		size = SZ_BIG;
 	else
-		size = SZ_MEDIUM;
+		size = SZ_SMALL;
 	
 	if (battle_config.etc_log)
 		ShowInfo("%s monster='%s' name='%s' id=%d count=%d (%d,%d)\n", command, monster, name, mob_id, number, sd->bl.x, sd->bl.y);
@@ -5469,7 +5469,8 @@ ACMD(autotrade) {
 	sd->state.autotrade = 1;
 	if( battle_config.at_timeout ) {
 		int timeout = atoi(message);
-		status->change_start(NULL,&sd->bl, SC_AUTOTRADE, 10000, 0, 0, 0, 0, ((timeout > 0) ? min(timeout,battle_config.at_timeout) : battle_config.at_timeout) * 60000, 0);
+		status->change_start(NULL,&sd->bl, SC_AUTOTRADE, 10000, 0, 0, 0, 0,
+		                     ((timeout > 0) ? min(timeout,battle_config.at_timeout) : battle_config.at_timeout) * 60000, SCFLAG_NONE);
 	}
 
 	/* currently standalone is not supporting buyingstores, so we rely on the previous method */
