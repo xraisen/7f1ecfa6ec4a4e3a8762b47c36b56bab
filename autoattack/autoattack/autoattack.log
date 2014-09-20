@@ -1,4 +1,4 @@
-﻿Build started 9/17/2014 12:01:24 PM.
+﻿Build started 9/20/2014 11:34:55 PM.
      1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autoattack\autoattack.vcxproj" on node 3 (build target(s)).
      1>InitializeBuildStatus:
          Creating "autoattack\\autoattack.unsuccessfulbuild" because "AlwaysCreate" was specified.
@@ -20,4 +20,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.09
+Time Elapsed 00:00:03.87
