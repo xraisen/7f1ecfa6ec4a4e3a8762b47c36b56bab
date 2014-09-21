@@ -3210,12 +3210,6 @@ void clif_changelook(struct block_list *bl,int type,int val)
 			break;
 			case LOOK_BASE:
 				if( !sd ) break;
-				// We shouldn't update LOOK_BASE if the player is disguised
-				// if we do so the client will think that the player class
-				// is really a mob and issues like 7725 will happen in every
-				// SC_ that alters class_ in any way [Panikon]
-				if( sd->disguise != -1 )
-					return;
 
 				if( sd->sc.option&OPTION_COSTUME )
 					vd->weapon = vd->shield = 0;
@@ -3295,7 +3289,7 @@ void clif_changelook(struct block_list *bl,int type,int val)
 	}
 
 	// prevent leaking the presence of GM-hidden objects
-	if( sc && sc->option&OPTION_INVISIBLE )
+	if( sc && sc->option&OPTION_INVISIBLE && !disguised(bl) )
 		target = SELF;
 
 #if PACKETVER < 4
@@ -3316,11 +3310,12 @@ void clif_changelook(struct block_list *bl,int type,int val)
 		WBUFB(buf,6)=type;
 		WBUFL(buf,7)=val;
 	}
-	clif->send(buf,packet_len(0x1d7),bl,target);
-	if( disguised(bl) && sd && sd->fontcolor ) {
+	if( disguised(bl) ) {
+		clif->send(buf,packet_len(0x1d7),bl,AREA_WOS);
 		WBUFL(buf,2)=-bl->id;
 		clif->send(buf,packet_len(0x1d7),bl,SELF);
-	}
+	} else
+		clif->send(buf,packet_len(0x1d7),bl,target);
 #endif
 }
 
@@ -5128,8 +5123,12 @@ int clif_skill_damage(struct block_list *src, struct block_list *dst, int64 tick
 
 	damage = (int)cap_value(in_damage,INT_MIN,INT_MAX);
 	type = clif_calc_delay(type,div,damage,ddelay);
-	sc = status->get_sc(dst);
-	if(sc && sc->count) {
+	
+#if PACKETVER >= 20131223
+	if( type == 6 ) type = 8; //bugreport:8263
+#endif
+	
+	if( ( sc = status->get_sc(dst) ) && sc->count ) {
 		if(sc->data[SC_ILLUSION] && damage)
 			damage = damage*(sc->data[SC_ILLUSION]->val2) + rnd()%100;
 	}
@@ -10497,7 +10496,7 @@ void clif_parse_WisMessage(int fd, struct map_session_data* sd)
 	}
 
 	// if player is autotrading
-	if( dstsd->state.autotrade == 1 ) {
+	if( dstsd->state.autotrade ) {
 		char output[256];
 		sprintf(output, "%s is in autotrade mode and cannot receive whispered messages.", dstsd->status.name);
 		clif->wis_message(fd, map->wisp_server_name, output, strlen(output) + 1);
@@ -12235,7 +12234,7 @@ void clif_parse_PartyMessage(int fd, struct map_session_data* sd)
 void clif_parse_PartyChangeLeader(int fd, struct map_session_data* sd) {
 	party->changeleader(sd, map->id2sd(RFIFOL(fd,2)));
 }
-
+	
 /// Party Booking in KRO [Spiria]
 ///
 
@@ -17702,8 +17701,8 @@ void clif_maptypeproperty2(struct block_list *bl,enum send_target t) {
 	p.PacketType = maptypeproperty2Type;
 	p.type = 0x28;
 	p.flag.party = map->list[bl->m].flag.pvp ? 1 : 0;
-	p.flag.guild = map_flag_gvg(bl->m) ? 1 : 0;
-	p.flag.siege = map_flag_gvg2(bl->m) ? 1: 0;
+	p.flag.guild = (map->list[bl->m].flag.battleground || map_flag_gvg(bl->m)) ? 1 : 0;
+	p.flag.siege = (map->list[bl->m].flag.battleground || map_flag_gvg2(bl->m)) ? 1: 0;
 	p.flag.mineffect = map_flag_gvg(bl->m); // FIXME/CHECKME Forcing /mineffect in castles during WoE (probably redundant? I'm not sure)
 	p.flag.nolockon = 0; // TODO
 	p.flag.countpk = map->list[bl->m].flag.pvp ? 1 : 0;
@@ -18255,6 +18254,18 @@ void clif_parse_NPCMarketPurchase(int fd, struct map_session_data *sd) {
 	clif->npc_market_purchase_ack(sd,p,npc->market_buylist(sd,(p->PacketLength - 4) / sizeof(p->list[0]),p));
 #endif
 }
+	
+void clif_PartyLeaderChanged(struct map_session_data *sd, int prev_leader_aid, int new_leader_aid) {
+	struct packet_party_leader_changed p;
+	
+	p.PacketType = partyleaderchangedType;
+	
+	p.prev_leader_aid = prev_leader_aid;
+	p.new_leader_aid = new_leader_aid;
+	
+	clif->send(&p,sizeof(p),&sd->bl,PARTY);
+}
+	
 /* */
 unsigned short clif_decrypt_cmd( int cmd, struct map_session_data *sd ) {
 	if( sd ) {
@@ -18885,6 +18896,7 @@ void clif_defaults(void) {
 	clif->party_xy_remove = clif_party_xy_remove;
 	clif->party_show_picker = clif_party_show_picker;
 	clif->partyinvitationstate = clif_partyinvitationstate;
+	clif->PartyLeaderChanged = clif_PartyLeaderChanged;
 	/* guild-specific */
 	clif->guild_created = clif_guild_created;
 	clif->guild_belonginfo = clif_guild_belonginfo;
