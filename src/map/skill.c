@@ -8696,8 +8696,8 @@ int skill_castend_nodamage_id(struct block_list *src, struct block_list *bl, uin
 				sc_start(src,bl,SC_SILENCE,100,skill_lv,sd->bonus.shieldmdef * 30000);
 			} else {
 				int opt = 0, val = 0, splashrange = 0;
-				struct item_data *shield_data = sd->inventory_data[sd->equip_index[EQI_HAND_L]];
-				if( !shield_data || shield_data->type != IT_ARMOR ) {
+				struct item_data *shield_data = NULL;
+				if( sd->equip_index[EQI_HAND_L] < 0 || !( shield_data = sd->inventory_data[sd->equip_index[EQI_HAND_L]] ) || shield_data->type != IT_ARMOR ) {
 					//Skill will first check if a shield is equipped. If none is found on the caster the skill will fail.
 					clif->skill_fail(sd,skill_id,USESKILL_FAIL_LEVEL,0);
 					break;
@@ -17522,12 +17522,12 @@ int skill_blockpc_start_(struct map_session_data *sd, uint16 skill_id, int tick)
 	} else {
 		int i;
 		
-		for(i = 0; i < MAX_SKILL_TREE; i++) {
+		for(i = 0; i < cd->cursor; i++) {
 			if( cd->entry[i] && cd->entry[i]->skidx == idx )
 				break;
 		}
 	
-		if( i != MAX_SKILL_TREE ) {/* duplicate, update necessary */
+		if( i != cd->cursor ) {/* duplicate, update necessary */
 			cd->entry[i]->duration = tick;
 #if PACKETVER >= 20120604
 			cd->entry[i]->total = tick;
@@ -18597,7 +18597,7 @@ int do_init_skill(bool minimal) {
 	skill->unit_ers = ers_new(sizeof(struct skill_unit_group),"skill.c::skill_unit_ers",ERS_OPT_CLEAN|ERS_OPT_FLEX_CHUNK);
 	skill->timer_ers  = ers_new(sizeof(struct skill_timerskill),"skill.c::skill_timer_ers",ERS_OPT_NONE|ERS_OPT_FLEX_CHUNK);
 	skill->cd_ers = ers_new(sizeof(struct skill_cd),"skill.c::skill_cd_ers",ERS_OPT_CLEAR|ERS_OPT_CLEAN|ERS_OPT_FLEX_CHUNK);
-	skill->cd_entry_ers = ers_new(sizeof(struct skill_cd_entry),"skill.c::skill_cd_entry_ers",ERS_OPT_CLEAR|ERS_OPT_FLEX_CHUNK);
+	skill->cd_entry_ers = ers_new(sizeof(struct skill_cd_entry),"skill.c::skill_cd_entry_ers",ERS_OPT_CLEAR|ERS_OPT_CLEAN|ERS_OPT_FLEX_CHUNK);
 
 	ers_chunk_size(skill->cd_ers, 25);
 	ers_chunk_size(skill->cd_entry_ers, 100);

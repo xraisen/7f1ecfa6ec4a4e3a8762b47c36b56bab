@@ -619,7 +619,7 @@ ACMD(who) {
 					break;
 				}
 			}
-			clif->message(fd, StrBuf->Value(&buf));
+			clif->colormes(fd, COLOR_DEFAULT, StrBuf->Value(&buf));/** for whatever reason clif->message crashes with some patterns, see bugreport:8186 **/
 			StrBuf->Clear(&buf);
 			count++;
 		}
@@ -5473,19 +5473,16 @@ ACMD(autotrade) {
 		                     ((timeout > 0) ? min(timeout,battle_config.at_timeout) : battle_config.at_timeout) * 60000, SCFLAG_NONE);
 	}
 
-	/* currently standalone is not supporting buyingstores, so we rely on the previous method */
-	if( sd->state.buyingstore ) {
-		clif->authfail_fd(fd, 15);
-		return true;
-	}
-
-	
 	clif->chsys_quit(sd);
 	
 	clif->authfail_fd(sd->fd, 15);
-	
+
+	/* currently standalone is not supporting buyingstores, so we rely on the previous method */
+	if( sd->state.buyingstore )
+		return true;
 	
 #ifdef AUTOTRADE_PERSISTENCY
+	sd->state.autotrade = 2;/** state will enter pre-save, we use it to rule out some criterias **/
 	pc->autotrade_prepare(sd);
 	
 	return false;/* we fail to not cause it to proceed on is_atcommand */
@@ -9962,8 +9959,7 @@ bool atcommand_exec(const int fd, struct map_session_data *sd, const char *messa
 	//Attempt to use the command
 	if ( (info->func(fd, (*atcmd_msg == atcommand->at_symbol) ? sd : ssd, command, params,info) != true) ) {
 #ifdef AUTOTRADE_PERSISTENCY
-		// Autotrade was successful if standalone is set
-		if( ((*atcmd_msg == atcommand->at_symbol) ? sd->state.standalone : ssd->state.standalone) )
+		if( info->func == atcommand_autotrade ) /** autotrade deletes caster, so we got nothing more to do here **/
 			return true;
 #endif
 		sprintf(output,msg_txt(154), command); // %s failed.
