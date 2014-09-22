@@ -1,7 +1,7 @@
-﻿Build started 9/21/2014 12:49:51 PM.
+﻿Build started 9/22/2014 11:48:02 PM.
      1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\itemmap\itemmap.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
-         Creating "itemmap\\itemmap.unsuccessfulbuild" because "AlwaysCreate" was specified.
+         Touching "itemmap\\itemmap.unsuccessfulbuild".
        ClCompile:
          C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\src\common /I..\3rdparty\msinttypes\include /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D _WINDLL /D _MBCS /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"itemmap\\" /Fd"itemmap\\vc100.pdb" /Gd /TC /analyze- /errorReport:prompt ..\src\plugins\itemmap.c
          itemmap.c
@@ -26,4 +26,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.27
+Time Elapsed 00:00:01.72

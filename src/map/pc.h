@@ -26,7 +26,7 @@
 /**
  * Defines
  **/
-#define MAX_PC_BONUS 10
+#define MAX_PC_BONUS 25
 #define MAX_PC_SKILL_REQUIRE 5
 #define MAX_PC_FEELHATE 3
 #define PVP_CALCRANK_INTERVAL 1000	// PVP calculation interval
