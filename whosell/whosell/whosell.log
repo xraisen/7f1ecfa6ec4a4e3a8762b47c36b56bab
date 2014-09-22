@@ -1,4 +1,4 @@
-﻿Build started 9/21/2014 12:49:48 PM.
+﻿Build started 9/22/2014 11:47:59 PM.
      1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\whosell\whosell.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "whosell\\whosell.unsuccessfulbuild" because "AlwaysCreate" was specified.
@@ -44,4 +44,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.71
+Time Elapsed 00:00:01.25
