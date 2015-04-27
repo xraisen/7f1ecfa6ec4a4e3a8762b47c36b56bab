@@ -40,7 +40,7 @@ next;
 				case 2:					
 					mes "^33ae1e[Mean Man]^000000";
 					mes "You are stupid!";
-					if (checkquest(41000) == 2) erasequest (41000);
+					if (questactive(41000) == 2) erasequest (41000);
 					setquest 41000;
 					set quest_mount,1;
 					break;

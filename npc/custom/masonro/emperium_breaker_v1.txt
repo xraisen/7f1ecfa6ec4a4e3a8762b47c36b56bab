@@ -69,12 +69,12 @@ case 4:
 			break;
 		case 2:
 			mes "Please input the ^FF0000EXACT NAME^000000 of player you want to delete.";
-			input .Name$;
+			input .name$;
 			for( set .@i,0; .@i < .TopRank; set .@i,.@i + 1 ){
-				if( .Name$ == $TopName$[.@i] ){
+				if( .name$ == $TopName$[.@i] ){
 					deletearray $TopName$[.@i],1;
 					deletearray $TopRankTime[.@i],1;
-					mes "Removed ^FF0000"+.Name$+"^000000 from the List.";
+					mes "Removed ^FF0000"+.name$+"^000000 from the List.";
 				}
 			}
 		}

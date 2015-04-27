@@ -23,8 +23,8 @@ function Job_Menu; function A_An;
 		mes "No more jobs are available.";
 		close;
 	}
-	if (checkfalcon() || checkcart() || checkriding() || ismounting()) {
-		mes "Please remove your "+((checkfalcon())?"falcon":"")+((checkcart())?"cart":"")+((checkriding())?"Peco":"")+((ismounting())?"mount":"")+" before proceeding.";
+	if (checkfalcon() || checkcart() || checkmount()) {
+		mes "Please remove your "+((checkfalcon())?"falcon":"")+((checkcart())?"cart":"")+((checkmount())?"Peco":"")+" before proceeding.";
 		close;
 	}
 	if (.SkillPointCheck && SkillPoint) {

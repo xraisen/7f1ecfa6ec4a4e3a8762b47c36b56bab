@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C++ Express 2010
+# Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "char-server", "vcproj-10\char-server.vcxproj", "{D356871D-58E1-450B-967A-E4E9646175AF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "login-server", "vcproj-10\login-server.vcxproj", "{D356871D-58E1-450B-967A-E5E9646175AF}"
@@ -9,8 +9,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mapcache", "vcproj-10\mapcache.vcxproj", "{D356871D-58E1-450B-967A-E7E9646175AF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin-sample", "vcproj-10\plugin-sample.vcxproj", "{E64C56D3-CDFB-483B-900B-A62D216B6D2F}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin-HPMHooking", "vcproj-10\plugin-HPMHooking.vcxproj", "{7ED92B9F-95E8-49B8-9D4F-C4C9BFDE0B22}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "afk", "afk\afk.vcxproj", "{7E1B13D2-BE98-43D9-A19E-596C212939E4}"
 EndProject
@@ -29,7 +27,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "storeit", "storeit\storeit.vcxproj", "{8BE5D67A-D047-4EDD-89D0-4A211502D3BF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "whosell", "whosell\whosell.vcxproj", "{BB46BD85-44D6-4790-BC87-8A2BA06CF8B1}"
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin-HPMHooking_map", "vcproj-10\plugin-HPMHooking_map.vcxproj", "{7ED92B9F-95E8-49B8-9D4F-C4C9BFDE0B22}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin-HPMHooking_map", "vcproj-10\plugin-HPMHooking_map.vcxproj", "{F2CE08DE-7323-4B66-AD6F-0BF9F99671BF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin-HPMHooking_char", "vcproj-10\plugin-HPMHooking_char.vcxproj", "{337F99A2-528C-473C-97F0-BF202F197061}"
 EndProject
@@ -59,8 +58,6 @@ Global
 		{D356871D-58E1-450B-967A-E7E9646175AF}.Release|Win32.Build.0 = Release|Win32
 		{E64C56D3-CDFB-483B-900B-A62D216B6D2F}.Debug|Win32.ActiveCfg = Debug|Win32
 		{E64C56D3-CDFB-483B-900B-A62D216B6D2F}.Release|Win32.ActiveCfg = Release|Win32
-		{7ED92B9F-95E8-49B8-9D4F-C4C9BFDE0B22}.Debug|Win32.ActiveCfg = Debug|Win32
-		{7ED92B9F-95E8-49B8-9D4F-C4C9BFDE0B22}.Release|Win32.ActiveCfg = Release|Win32
 		{7E1B13D2-BE98-43D9-A19E-596C212939E4}.Debug|Win32.ActiveCfg = Debug|Win32
 		{7E1B13D2-BE98-43D9-A19E-596C212939E4}.Debug|Win32.Build.0 = Debug|Win32
 		{7E1B13D2-BE98-43D9-A19E-596C212939E4}.Release|Win32.ActiveCfg = Release|Win32
@@ -97,9 +94,8 @@ Global
 		{BB46BD85-44D6-4790-BC87-8A2BA06CF8B1}.Debug|Win32.Build.0 = Debug|Win32
 		{BB46BD85-44D6-4790-BC87-8A2BA06CF8B1}.Release|Win32.ActiveCfg = Release|Win32
 		{BB46BD85-44D6-4790-BC87-8A2BA06CF8B1}.Release|Win32.Build.0 = Release|Win32
-		{7ED92B9F-95E8-49B8-9D4F-C4C9BFDE0B22}.Debug|Win32.Build.0 = Debug|Win32
-		{7ED92B9F-95E8-49B8-9D4F-C4C9BFDE0B22}.Release|Win32.ActiveCfg = Release|Win32
-		{7ED92B9F-95E8-49B8-9D4F-C4C9BFDE0B22}.Release|Win32.Build.0 = Release|Win32
+		{F2CE08DE-7323-4B66-AD6F-0BF9F99671BF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F2CE08DE-7323-4B66-AD6F-0BF9F99671BF}.Release|Win32.ActiveCfg = Release|Win32
 		{337F99A2-528C-473C-97F0-BF202F197061}.Debug|Win32.ActiveCfg = Debug|Win32
 		{337F99A2-528C-473C-97F0-BF202F197061}.Debug|Win32.Build.0 = Debug|Win32
 		{337F99A2-528C-473C-97F0-BF202F197061}.Release|Win32.ActiveCfg = Release|Win32

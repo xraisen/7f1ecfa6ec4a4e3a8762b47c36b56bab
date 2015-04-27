@@ -1,5 +1,6 @@
-﻿Build started 12/1/2014 4:05:50 PM.
-     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autobuyammo\autobuyammo.vcxproj" on node 3 (build target(s)).
+﻿Build started 4/27/2015 9:40:36 AM.
+     1>Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autobuyammo\autobuyammo.vcxproj" on node 2 (rebuild target(s)).
+     1>C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppClean.targets(74,5): warning : Access to the path 'D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\plugins\autobuyammo.dll' is denied.
      1>InitializeBuildStatus:
          Creating "autobuyammo\\autobuyammo.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
@@ -7,17 +8,9 @@
          autobuyammo.c
        Link:
          C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"..\plugins\autobuyammo.dll" /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"autobuyammo\\autobuyammo.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\plugins\autobuyammo.pdb" /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"..\plugins\autobuyammo.lib" /MACHINE:X86 /DLL autobuyammo\\autobuyammo.obj
-            Creating library ..\plugins\autobuyammo.lib and object ..\plugins\autobuyammo.exp
-         Generating code
-         Finished generating code
-         autobuyammo.vcxproj -> D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autobuyammo\..\plugins\autobuyammo.dll
-       Manifest:
-         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"..\plugins\autobuyammo.dll;#2" /manifest autobuyammo\\autobuyammo.dll.intermediate.manifest
-       FinalizeBuildStatus:
-         Deleting file "autobuyammo\\autobuyammo.unsuccessfulbuild".
-         Touching "autobuyammo\\autobuyammo.lastbuildstate".
-     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autobuyammo\autobuyammo.vcxproj" (build target(s)).
+     1>LINK : fatal error LNK1104: cannot open file '..\plugins\autobuyammo.dll'
+     1>Done Building Project "D:\My Documents\My Files\MasonRO\Hercules\2013-08-14aRagexe Full Client\Master\MasonRO\autobuyammo\autobuyammo.vcxproj" (rebuild target(s)) -- FAILED.
 
-Build succeeded.
+Build FAILED.
 
-Time Elapsed 00:00:01.37
+Time Elapsed 00:00:01.16

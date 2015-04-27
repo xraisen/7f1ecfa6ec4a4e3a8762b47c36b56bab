@@ -1531,10 +1531,10 @@ function	script	br_fr02	{
 		mes "[" + @name$ + "]";
 		callfunc "BR_Skill";	
 	
-		if (BaseClass == Job_Swordman && checkriding() == 0 && getskilllv(63)==1) {
+		if (BaseClass == Job_Swordman && checkmount() == 0 && getskilllv(63)==1) {
 			mes "D'un Peco-Peco !";
 			close2;
-			setriding;
+			setmount;
 			end;}
 		if (BaseClass == Job_Archer && checkfalcon() == 0 && getskilllv(127)==1) {
 			mes "D'un Faucon !";
@@ -1615,10 +1615,10 @@ function	script	br_en02	{
 		mes "[" + @name$ + "]";
 		callfunc "BR_Skill";	
 	
-		if (BaseClass == Job_Swordman && checkriding() == 0 && getskilllv(63)==1) {
+		if (BaseClass == Job_Swordman && checkmount() == 0 && getskilllv(63)==1) {
 			mes "A Peco-Peco !";
 			close2;
-			setriding;
+			setmount;
 			end;}
 		if (BaseClass == Job_Archer && checkfalcon() == 0 && getskilllv(127)==1) {
 			mes "A Falcon !";
