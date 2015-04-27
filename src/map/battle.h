@@ -384,6 +384,7 @@ struct Battle_Config {
 	int skill_wall_check; // [Skotlex]
 	int official_cell_stack_limit; // [Playtester]
 	int custom_cell_stack_limit; // [Skotlex]
+	int check_occupied_cells; // [4144]
 	int skill_caster_check; // [Skotlex]
 	int sc_castcancel; // [Skotlex]
 	int pc_sc_def_rate; // [Skotlex]
@@ -487,7 +488,9 @@ struct Battle_Config {
 	int feature_roulette;
 };
 
+#ifdef HERCULES_CORE
 extern struct Battle_Config battle_config;
+#endif // HERCULES_CORE
 
 /* criteria for battle_config.idletime_critera */
 enum e_battle_config_idletime {
@@ -555,6 +558,7 @@ struct battle_interface {
 	int64 (*attr_fix) (struct block_list *src, struct block_list *target, int64 damage, int atk_elem, int def_type, int def_lv);
 	/* applies card modifiers */
 	int64 (*calc_cardfix) (int attack_type, struct block_list *src, struct block_list *target, int nk, int s_ele, int s_ele_, int64 damage, int left, int flag);
+	int64 (*calc_cardfix2) (struct block_list *src, struct block_list *bl, int64 damage, int s_ele, int nk, int flag);
 	/* applies element modifiers */
 	int64 (*calc_elefix) (struct block_list *src, struct block_list *target, uint16 skill_id, uint16 skill_lv, int64 damage, int nk, int n_ele, int s_ele, int s_ele_, bool left, int flag);
 	/* applies mastery modifiers */
@@ -612,9 +616,16 @@ struct battle_interface {
 	struct block_list* (*get_enemy_area) (struct block_list *src, int x, int y, int range, int type, int ignore_id);
 	/* damages area, originally for royal guard's reflect damage */
 	int (*damage_area) (struct block_list *bl, va_list ap);
+	void (*calc_masteryfix_unknown) (struct block_list *src, struct block_list *target, uint16 *skill_id, uint16 *skill_lv, int64 *damage, int *div, bool *left, bool *weapon);
+	void (*calc_skillratio_magic_unknown) (int *attack_type, struct block_list *src, struct block_list *target, uint16 *skill_id, uint16 *skill_lv, int *skillratio, int *flag);
+	void (*calc_skillratio_weapon_unknown) (int *attack_type, struct block_list *src, struct block_list *target, uint16 *skill_id, uint16 *skill_lv, int *skillratio, int *flag);
+	void (*calc_misc_attack_unknown) (struct block_list *src, struct block_list *target, uint16 *skill_id, uint16 *skill_lv, int *mflag, struct Damage *md);
 };
 
 struct battle_interface *battle;
 
+#ifdef HERCULES_CORE
 void battle_defaults(void);
+#endif // HERCULES_CORE
+
 #endif /* MAP_BATTLE_H */

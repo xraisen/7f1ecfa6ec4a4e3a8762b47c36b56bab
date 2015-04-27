@@ -414,6 +414,7 @@ struct item_data {
 		unsigned autoequip: 1;
 		unsigned buyingstore : 1;
 		unsigned bindonequip : 1;
+		unsigned keepafteruse : 1;
 	} flag;
 	struct {// item stacking limitation
 		unsigned short amount;
@@ -433,6 +434,10 @@ struct item_data {
 	/* TODO add a pointer to some sort of (struct extra) and gather all the not-common vals into it to save memory */
 	struct item_group *group;
 	struct item_package *package;
+
+	/* HPM Custom Struct */
+	struct HPluginData **hdata;
+	unsigned int hdatac;
 };
 
 struct item_combo {
@@ -599,6 +604,7 @@ struct itemdb_interface {
 	void (*read_combos) ();
 	int (*gendercheck) (struct item_data *id);
 	int (*validate_entry) (struct item_data *entry, int n, const char *source);
+	void (*readdb_additional_fields) (int itemid, config_setting_t *it, int n, const char *source);
 	int (*readdb_sql_sub) (Sql *handle, int n, const char *source);
 	int (*readdb_libconfig_sub) (config_setting_t *it, int n, const char *source);
 	int (*readdb_libconfig) (const char *filename);
@@ -609,10 +615,14 @@ struct itemdb_interface {
 	int (*final_sub) (DBKey key, DBData *data, va_list ap);
 	void (*clear) (bool total);
 	struct item_combo * (*id2combo) (unsigned short id);
+	bool (*is_item_usable) (struct item_data *item);
+	bool (*lookup_const) (const config_setting_t *it, const char *name, int *value);
 };
 
 struct itemdb_interface *itemdb;
 
+#ifdef HERCULES_CORE
 void itemdb_defaults(void);
+#endif // HERCULES_CORE
 
 #endif /* MAP_ITEMDB_H */

@@ -22,6 +22,7 @@
 #include "pet.h"
 #include "../common/cbasetypes.h"
 #include "../common/conf.h"
+#include "../common/HPM.h"
 #include "../common/malloc.h"
 #include "../common/nullpo.h"
 #include "../common/showmsg.h"
@@ -47,12 +48,12 @@ struct map_session_data* bg_getavailablesd(struct battleground_data *bgd) {
 /// Deletes BG Team from db
 bool bg_team_delete(int bg_id) {
 	int i;
-	struct map_session_data *sd;
 	struct battleground_data *bgd = bg->team_search(bg_id);
 
 	if( bgd == NULL ) return false;
 	for( i = 0; i < MAX_BG_MEMBERS; i++ ) {
-		if( (sd = bgd->members[i].sd) == NULL )
+		struct map_session_data *sd = bgd->members[i].sd;
+		if (sd == NULL)
 			continue;
 
 		bg->send_dot_remove(sd);
@@ -81,7 +82,6 @@ void bg_send_dot_remove(struct map_session_data *sd) {
 bool bg_team_join(int bg_id, struct map_session_data *sd) {
 	int i;
 	struct battleground_data *bgd = bg->team_search(bg_id);
-	struct map_session_data *pl_sd;
 
 	if( bgd == NULL || sd == NULL || sd->bg_id ) return false;
 
@@ -106,7 +106,8 @@ bool bg_team_join(int bg_id, struct map_session_data *sd) {
 	guild->send_dot_remove(sd);
 
 	for( i = 0; i < MAX_BG_MEMBERS; i++ ) {
-		if( (pl_sd = bgd->members[i].sd) != NULL && pl_sd != sd )
+		struct map_session_data *pl_sd = bgd->members[i].sd;
+		if (pl_sd != NULL && pl_sd != sd)
 			clif->hpmeter_single(sd->fd, pl_sd->bl.id, pl_sd->battle_status.hp, pl_sd->battle_status.max_hp);
 	}
 
@@ -119,7 +120,6 @@ bool bg_team_join(int bg_id, struct map_session_data *sd) {
 int bg_team_leave(struct map_session_data *sd, enum bg_team_leave_type flag) {
 	int i, bg_id;
 	struct battleground_data *bgd;
-	char output[128];
 
 	if( sd == NULL || !sd->bg_id )
 		return 0;
@@ -139,8 +139,9 @@ int bg_team_leave(struct map_session_data *sd, enum bg_team_leave_type flag) {
 		memset(&bgd->members[i], 0, sizeof(bgd->members[0]));
 	}
 
-	if( --bgd->count != 0 ) {
-		switch( flag ) {
+	if (--bgd->count != 0) {
+		char output[128];
+		switch (flag) {
 			default:
 			case BGTL_QUIT:
 				sprintf(output, "Server : %s has quit the game...", sd->status.name);
@@ -305,7 +306,7 @@ void bg_config_read(void) {
 		config_setting_t *settings = libconfig->setting_get_elem(data, 0);
 		config_setting_t *arenas;
 		const char *delay_var;
-		int i, arena_count = 0, offline = 0;
+		int offline = 0;
 
 		if( !libconfig->setting_lookup_string(settings, "global_delay_var", &delay_var) )
 			delay_var = "BG_Delay_Tick";
@@ -319,7 +320,8 @@ void bg_config_read(void) {
 			bg->queue_on = true;
 
 		if( (arenas = libconfig->setting_get_member(settings, "arenas")) != NULL ) {
-			arena_count = libconfig->setting_length(arenas);
+			int i;
+			int arena_count = libconfig->setting_length(arenas);
 			CREATE( bg->arena, struct bg_arena *, arena_count );
 			for(i = 0; i < arena_count; i++) {
 				config_setting_t *arena = libconfig->setting_get_elem(arenas, i);
@@ -793,7 +795,7 @@ enum BATTLEGROUNDS_QUEUE_ACK bg_canqueue(struct map_session_data *sd, struct bg_
 					count++;
 				}
 				if ( count < arena->min_team_players ) {
-					char response[100];
+					char response[117];
 					if( count != sd->guild->connect_member && sd->guild->connect_member >= arena->min_team_players )
 						sprintf(response, "Can't apply: not enough members in your team/guild that have not entered the queue in individual mode, minimum is %d",arena->min_team_players);
 					else
@@ -825,7 +827,7 @@ enum BATTLEGROUNDS_QUEUE_ACK bg_canqueue(struct map_session_data *sd, struct bg_
 						return BGQA_NOT_PARTY_GUILD_LEADER;
 
 					if( count < arena->min_team_players ) {
-						char response[100];
+						char response[117];
 						if( count != p->party.count && p->party.count >= arena->min_team_players )
 							sprintf(response, "Can't apply: not enough members in your team/party that have not entered the queue in individual mode, minimum is %d",arena->min_team_players);
 						else
@@ -855,18 +857,37 @@ void do_init_battleground(bool minimal) {
 	bg->config_read();
 }
 
-void do_final_battleground(void) {
+/**
+ * @see DBApply
+ */
+int bg_team_db_final(DBKey key, DBData *data, va_list ap) {
+	struct battleground_data* bgd = DB->data2ptr(data);
 	int i;
-
-	db_destroy(bg->team_db);
-
-	for( i = 0; i < bg->arenas; i++ ) {
-		if( bg->arena[i] )
-			aFree(bg->arena[i]);
+	for(i = 0; i < bgd->hdatac; i++ ) {
+		if( bgd->hdata[i]->flag.free ) {
+			aFree(bgd->hdata[i]->data);
+		}
+		aFree(bgd->hdata[i]);
 	}
+	if( bgd->hdata )
+		aFree(bgd->hdata);
+		
+	return 0;
+}
 
-	if( bg->arena )
+void do_final_battleground(void)
+{
+	bg->team_db->destroy(bg->team_db,bg->team_db_final);
+
+	if (bg->arena) {
+		int i;
+		for (i = 0; i < bg->arenas; i++) {
+			if (bg->arena[i])
+				aFree(bg->arena[i]);
+		}
 		aFree(bg->arena);
+	}
+	
 }
 void battleground_defaults(void) {
 	bg = &bg_s;
@@ -910,6 +931,7 @@ void battleground_defaults(void) {
 	bg->send_xy_timer_sub = bg_send_xy_timer_sub;
 	bg->send_xy_timer = bg_send_xy_timer;
 	bg->afk_timer = bg_afk_timer;
+	bg->team_db_final = bg_team_db_final;
 	/* */
 	bg->str2teamtype = bg_str2teamtype;
 	/* */

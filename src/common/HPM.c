@@ -23,6 +23,7 @@
 #include "../common/sysinfo.h"
 #include "../common/timer.h"
 #include "../common/utils.h"
+#include "../common/nullpo.h"
 
 #ifndef WIN32
 #	include <unistd.h>
@@ -94,7 +95,6 @@ struct hplugin *hplugin_create(void) {
 }
 #define HPM_POP(x) { #x , x }
 bool hplugin_populate(struct hplugin *plugin, const char *filename) {
-	void **Link;
 	struct {
 		const char* name;
 		void *Ref;
@@ -112,7 +112,8 @@ bool hplugin_populate(struct hplugin *plugin, const char *filename) {
 	int i, length = ARRAYLENGTH(ToLink);
 
 	for(i = 0; i < length; i++) {
-		if( !( Link = plugin_import(plugin->dll, ToLink[i].name,void **) ) ) {
+		void **Link;
+		if (!( Link = plugin_import(plugin->dll, ToLink[i].name,void **))) {
 			ShowWarning("HPM:plugin_load: failed to retrieve '%s' for '"CL_WHITE"%s"CL_RESET"', skipping...\n", ToLink[i].name, filename);
 			HPM->unload(plugin);
 			return false;
@@ -141,8 +142,9 @@ struct hplugin *hplugin_load(const char* filename) {
 
 	plugin = HPM->create();
 
-	if( !( plugin->dll = plugin_open(filename) ) ){
-		ShowWarning("HPM:plugin_load: failed to load '"CL_WHITE"%s"CL_RESET"', skipping...\n", filename);
+	if (!(plugin->dll = plugin_open(filename))) {
+		char buf[1024];
+		ShowWarning("HPM:plugin_load: failed to load '"CL_WHITE"%s"CL_RESET"' (error: %s), skipping...\n", filename, plugin_geterror(buf));
 		HPM->unload(plugin);
 		return NULL;
 	}
@@ -266,16 +268,17 @@ struct hplugin *hplugin_load(const char* filename) {
 }
 
 void hplugin_unload(struct hplugin* plugin) {
-	unsigned int i = plugin->idx, cursor = 0;
+	unsigned int i = plugin->idx;
 
 	if( plugin->filename )
 		aFree(plugin->filename);
 	if( plugin->dll )
 		plugin_close(plugin->dll);
 	/* TODO: for manual packet unload */
-	/* - Go thru known packets and unlink any belonging to the plugin being removed */
+	/* - Go through known packets and unlink any belonging to the plugin being removed */
 	aFree(plugin);
-	if( !HPM->off ) {
+	if (!HPM->off) {
+		int cursor = 0;
 		HPM->plugins[i] = NULL;
 		for(i = 0; i < HPM->plugin_count; i++) {
 			if( HPM->plugins[i] == NULL )
@@ -291,7 +294,20 @@ void hplugin_unload(struct hplugin* plugin) {
 	}
 }
 
-void hplugins_config_read(const char * const *extra_plugins, int extra_plugins_count) {
+/**
+ * Adds a plugin requested from the command line to the auto-load list.
+ */
+CMDLINEARG(loadplugin)
+{
+	RECREATE(HPM->cmdline_plugins, char *, ++HPM->cmdline_plugins_count);
+	HPM->cmdline_plugins[HPM->cmdline_plugins_count-1] = aStrdup(params);
+	return true;
+}
+
+/**
+ * Reads the plugin configuration and loads the plugins as necessary.
+ */
+void hplugins_config_read(void) {
 	config_t plugins_conf;
 	config_setting_t *plist = NULL;
 	const char *config_filename = "conf/plugins.conf"; // FIXME hardcoded name
@@ -311,9 +327,9 @@ void hplugins_config_read(const char * const *extra_plugins, int extra_plugins_c
 		HPM->symbol_defaults_sub();
 
 	plist = libconfig->lookup(&plugins_conf, "plugins_list");
-	for (i = 0; i < extra_plugins_count; i++) {
+	for (i = 0; i < HPM->cmdline_plugins_count; i++) {
 		config_setting_t *entry = libconfig->setting_add(plist, NULL, CONFIG_TYPE_STRING);
-		config_setting_set_string(entry, extra_plugins[i]);
+		config_setting_set_string(entry, HPM->cmdline_plugins[i]);
 	}
 
 	if (plist != NULL) {
@@ -560,6 +576,9 @@ unsigned char hplugins_parse_packets(int fd, enum HPluginPacketHookingPoints poi
 char *hplugins_id2name (unsigned int pid) {
 	unsigned int i;
 
+	if (pid == HPM_PID_CORE)
+		return "core";
+
 	for( i = 0; i < HPM->plugin_count; i++ ) {
 		if( HPM->plugins[i]->idx == pid )
 			return HPM->plugins[i]->info->name;
@@ -622,50 +641,32 @@ void HPM_HookStop (const char *func, unsigned int pID) {
 bool HPM_HookStopped (void) {
 	return HPM->force_return;
 }
-/* command-line args */
-bool hpm_parse_arg(const char *arg, int *index, char *argv[], bool param) {
-	struct HPMArgData *data;
+/**
+ * Adds a plugin-defined command-line argument.
+ *
+ * @param pluginID  the current plugin's ID.
+ * @param name      the command line argument's name, including the leading '--'.
+ * @param has_param whether the command line argument expects to be followed by a value.
+ * @param func      the triggered function.
+ * @param help      the help string to be displayed by '--help', if any.
+ * @return the success status.
+ */
+bool hpm_add_arg(unsigned int pluginID, char *name, bool has_param, CmdlineExecFunc func, const char *help) {
+	int i;
 
-	if( (data = strdb_get(HPM->arg_db,arg)) ) {
-		data->func((data->has_param && param)?argv[(*index)+1]:NULL);
-		if( data->has_param && param ) *index += 1;
-		return true;
-	}
-
-	return false;
-}
-void hpm_arg_help(void) {
-	DBIterator *iter = db_iterator(HPM->arg_db);
-	struct HPMArgData *data = NULL;
-
-	for( data = dbi_first(iter); dbi_exists(iter); data = dbi_next(iter) ) {
-		if( data->help != NULL )
-			data->help();
-		else
-			ShowInfo("  %s (%s)\t\t<no description provided>\n",data->name,HPM->pid2name(data->pluginID));
-	}
-
-	dbi_destroy(iter);
-}
-bool hpm_add_arg(unsigned int pluginID, char *name, bool has_param, void (*func) (char *param),void (*help) (void)) {
-	struct HPMArgData *data = NULL;
-
-	if( strdb_exists(HPM->arg_db, name) ) {
-		ShowError("HPM:add_arg:%s duplicate! (from %s)\n",name,HPM->pid2name(pluginID));
+	if (!name || strlen(name) < 3 || name[0] != '-' || name[1] != '-') {
+		ShowError("HPM:add_arg:%s invalid argument name: arguments must begin with '--' (from %s)\n", name, HPM->pid2name(pluginID));
 		return false;
 	}
 
-	CREATE(data, struct HPMArgData, 1);
+	ARR_FIND(0, cmdline->args_data_count, i, strcmp(cmdline->args_data[i].name, name) == 0);
 
-	data->pluginID = pluginID;
-	data->name = aStrdup(name);
-	data->func = func;
-	data->help = help;
-	data->has_param = has_param;
+       if (i < cmdline->args_data_count) {
+               ShowError("HPM:add_arg:%s duplicate! (from %s)\n",name,HPM->pid2name(pluginID));
+               return false;
+       }
 
-	strdb_put(HPM->arg_db, data->name, data);
-
-	return true;
+       return cmdline->arg_add(pluginID, name, '\0', func, help, has_param ? CMDLINE_OPT_PARAM : CMDLINE_OPT_NORMAL);
 }
 bool hplugins_addconf(unsigned int pluginID, enum HPluginConfType type, char *name, void (*func) (const char *val)) {
 	struct HPConfListenStorage *conf;
@@ -783,6 +784,7 @@ void hplugins_share_defaults(void) {
 	HPM->share(&SERVER_TYPE,"SERVER_TYPE");
 	HPM->share(DB, "DB");
 	HPM->share(HPMiMalloc, "iMalloc");
+	HPM->share(nullpo,"nullpo");
 	/* socket */
 	HPM->share(sockt,"sockt");
 	/* strlib */
@@ -830,8 +832,6 @@ void hpm_init(void) {
 		HPM->packetsc[i] = 0;
 	}
 
-	HPM->arg_db = strdb_alloc(DB_OPT_RELEASE_DATA, 0);
-
 	HPM->symbol_defaults();
 
 #ifdef CONSOLE_INPUT
@@ -839,43 +839,38 @@ void hpm_init(void) {
 #endif
 	return;
 }
-void hpm_memdown(void) {
-	unsigned int i;
-
+void hpm_memdown(void)
+{
 	/* this memory is handled outside of the server's memory manager and thus cleared after memory manager goes down */
 
-	for( i = 0; i < HPM->fnamec; i++ ) {
-		free(HPM->fnames[i].name);
-	}
-
-	if( HPM->fnames )
+	if (HPM->fnames) {
+		unsigned int i;
+		for (i = 0; i < HPM->fnamec; i++) {
+			free(HPM->fnames[i].name);
+		}
 		free(HPM->fnames);
-}
-int hpm_arg_db_clear_sub(DBKey key, DBData *data, va_list args) {
-	struct HPMArgData *a = DB->data2ptr(data);
-
-	aFree(a->name);
-
-	return 0;
+	}
 }
 void hpm_final(void) {
 	unsigned int i;
 
 	HPM->off = true;
 
-	for( i = 0; i < HPM->plugin_count; i++ ) {
-		HPM->unload(HPM->plugins[i]);
-	}
-
 	if( HPM->plugins )
+	{
+		for( i = 0; i < HPM->plugin_count; i++ ) {
+			HPM->unload(HPM->plugins[i]);
+		}
 		aFree(HPM->plugins);
-
-	for( i = 0; i < HPM->symbol_count; i++ ) {
-		aFree(HPM->symbols[i]);
 	}
 
 	if( HPM->symbols )
+	{
+		for( i = 0; i < HPM->symbol_count; i++ ) {
+			aFree(HPM->symbols[i]);
+		}
 		aFree(HPM->symbols);
+	}
 
 	for( i = 0; i < hpPHP_MAX; i++ ) {
 		if( HPM->packets[i] )
@@ -886,8 +881,14 @@ void hpm_final(void) {
 		if( HPM->confsc[i] )
 			aFree(HPM->confs[i]);
 	}
-
-	HPM->arg_db->destroy(HPM->arg_db,HPM->arg_db_clear_sub);
+	if (HPM->cmdline_plugins) {
+		int j;
+		for (j = 0; j < HPM->cmdline_plugins_count; j++)
+			aFree(HPM->cmdline_plugins[j]);
+		aFree(HPM->cmdline_plugins);
+		HPM->cmdline_plugins = NULL;
+		HPM->cmdline_plugins_count = 0;
+	}
 
 	/* HPM->fnames is cleared after the memory manager goes down */
 	iMalloc->post_shutdown = hpm_memdown;
@@ -913,7 +914,8 @@ void hpm_defaults(void) {
 		HPM->confs[i] = NULL;
 		HPM->confsc[i] = 0;
 	}
-	HPM->arg_db = NULL;
+	HPM->cmdline_plugins = NULL;
+	HPM->cmdline_plugins_count = 0;
 	/* */
 	HPM->init = hpm_init;
 	HPM->final = hpm_final;
@@ -934,9 +936,6 @@ void hpm_defaults(void) {
 	HPM->parse_packets = hplugins_parse_packets;
 	HPM->load_sub = NULL;
 	HPM->addhook_sub = NULL;
-	HPM->arg_db_clear_sub = hpm_arg_db_clear_sub;
-	HPM->parse_arg = hpm_parse_arg;
-	HPM->arg_help = hpm_arg_help;
 	HPM->grabHPData = hplugins_grabHPData;
 	HPM->grabHPDataSub = NULL;
 	HPM->parseConf = hplugins_parse_conf;

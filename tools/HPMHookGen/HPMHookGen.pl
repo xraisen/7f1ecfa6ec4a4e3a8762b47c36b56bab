@@ -24,7 +24,7 @@ sub parse($$) {
 	$p =~ s/^.*?\)\((.*)\).*$/$1/; # Clean up extra parentheses )(around the arglist)
 
 	# Retrieve return type
-	unless ($d =~ /^(.+)\(\*\s*[a-zA-Z0-9_]+_interface::([^\)]+)\s*\)\(.*\)$/) {
+	unless ($d =~ /^(.+)\(\*\s*[a-zA-Z0-9_]+_interface::([^\)]+)\s*\)\s*\(.*\)$/) {
 		print "Error: unable to parse '$d'\n";
 		return {};
 	}
@@ -217,6 +217,8 @@ sub parse($$) {
 			$rtinit = ' = BL_NUL';
 		} elsif ($x =~ /^enum\s+homun_type$/) { # Known enum homun_type
 			$rtinit = ' = HT_INVALID';
+		} elsif ($x =~ /^enum\s+channel_operation_status$/) { # Known enum channel_operation_status
+			$rtinit = ' = HCS_STATUS_FAIL';
 		} elsif ($x =~ /^enum\s+bg_queue_types$/) { # Known enum bg_queue_types
 			$rtinit = ' = BGQT_INVALID';
 		} elsif ($x =~ /^struct\s+.*$/ or $x eq 'DBData') { # Structs

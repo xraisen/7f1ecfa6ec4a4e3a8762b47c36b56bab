@@ -13,6 +13,7 @@
 #include "atcommand.h"
 #include "battle.h"
 #include "battleground.h"
+#include "channel.h"
 #include "chat.h"
 #include "chrif.h"
 #include "clif.h"
@@ -101,6 +102,22 @@ bool HPM_map_grabHPData(struct HPDataOperationStorage *ret, enum HPluginDataType
 			ret->HPDataSRCPtr = (void**)(&((struct instance_data *)ptr)->hdata);
 			ret->hdatac = &((struct instance_data *)ptr)->hdatac;
 			break;
+		case HPDT_MOBDB:
+			ret->HPDataSRCPtr = (void**)(&((struct mob_db *)ptr)->hdata);
+			ret->hdatac = &((struct mob_db *)ptr)->hdatac;
+			break;
+		case HPDT_MOBDATA:
+			ret->HPDataSRCPtr = (void**)(&((struct mob_data *)ptr)->hdata);
+			ret->hdatac = &((struct mob_data *)ptr)->hdatac;
+			break;
+		case HPDT_ITEMDATA:
+			ret->HPDataSRCPtr = (void**)(&((struct item_data *)ptr)->hdata);
+			ret->hdatac = &((struct item_data *)ptr)->hdatac;
+			break;
+		case HPDT_BGDATA:
+			ret->HPDataSRCPtr = (void**)(&((struct battleground_data *)ptr)->hdata);
+			ret->hdatac = &((struct battleground_data *)ptr)->hdatac;
+			break;
 		default:
 			return false;
 	}
@@ -161,19 +178,19 @@ void HPM_map_do_init(void) {
 }
 
 void HPM_map_do_final(void) {
-	unsigned char i;
-	
-	if( atcommand_list )
+	if (atcommand_list)
 		aFree(atcommand_list);
 	/**
 	 * why is pcg->HPM being cleared here? because PCG's do_final is not final,
 	 * is used on reload, and would thus cause plugin-provided permissions to go away
 	 **/
-	for( i = 0; i < pcg->HPMpermissions_count; i++ ) {
-		aFree(pcg->HPMpermissions[i].name);
-	}
-	if( pcg->HPMpermissions )
+	if (pcg->HPMpermissions) {
+		unsigned char i;
+		for (i = 0; i < pcg->HPMpermissions_count; i++) {
+			aFree(pcg->HPMpermissions[i].name);
+		}
 		aFree(pcg->HPMpermissions);
+	}
 	
 	HPM->datacheck_final();
 }

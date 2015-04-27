@@ -19,6 +19,7 @@
 #include "../common/db.h"
 #include "../common/malloc.h"
 #include "../common/md5calc.h"
+#include "../common/nullpo.h"
 #include "../common/random.h"
 #include "../common/showmsg.h"
 #include "../common/socket.h"
@@ -98,6 +99,7 @@ static int login_online_db_setoffline(DBKey key, DBData *data, va_list ap)
 {
 	struct online_login_data* p = DB->data2ptr(data);
 	int server_id = va_arg(ap, int);
+	nullpo_ret(p);
 	if( server_id == -1 )
 	{
 		p->char_server = -1;
@@ -118,6 +120,7 @@ static int login_online_db_setoffline(DBKey key, DBData *data, va_list ap)
 static int login_online_data_cleanup_sub(DBKey key, DBData *data, va_list ap)
 {
 	struct online_login_data *character= DB->data2ptr(data);
+	nullpo_ret(character);
 	if (character->char_server == -2) //Unknown server.. set them offline
 		login->remove_online_user(character->account_id);
 	return 0;
@@ -136,6 +139,7 @@ int charif_sendallwos(int sfd, uint8* buf, size_t len)
 {
 	int i, c;
 
+	nullpo_ret(buf);
 	for( i = 0, c = 0; i < ARRAYLENGTH(server); ++i )
 	{
 		int fd = server[i].fd;
@@ -155,6 +159,7 @@ int charif_sendallwos(int sfd, uint8* buf, size_t len)
 /// Initializes a server structure.
 void chrif_server_init(int id)
 {
+	Assert_retv(id >= 0 && id < MAX_SERVERS);
 	memset(&server[id], 0, sizeof(server[id]));
 	server[id].fd = -1;
 }
@@ -163,7 +168,8 @@ void chrif_server_init(int id)
 /// Destroys a server structure.
 void chrif_server_destroy(int id)
 {
-	if( server[id].fd != -1 )
+	Assert_retv(id >= 0 && id < MAX_SERVERS);
+	if (server[id].fd != -1)
 	{
 		do_close(server[id].fd);
 		server[id].fd = -1;
@@ -183,6 +189,7 @@ void chrif_server_reset(int id)
 /// Called when the connection to Char Server is disconnected.
 void chrif_on_disconnect(int id)
 {
+	Assert_retv(id >= 0 && id < MAX_SERVERS);
 	ShowStatus("Char-server '%s' has disconnected.\n", server[id].name);
 	chrif_server_reset(id);
 }
@@ -207,6 +214,9 @@ bool login_check_encrypted(const char* str1, const char* str2, const char* passw
 {
 	char tmpstr[64+1], md5str[32+1];
 
+	nullpo_ret(str1);
+	nullpo_ret(str2);
+	nullpo_ret(passwd);
 	safesnprintf(tmpstr, sizeof(tmpstr), "%s%s", str1, str2);
 	MD5_String(tmpstr, md5str);
 
@@ -215,6 +225,8 @@ bool login_check_encrypted(const char* str1, const char* str2, const char* passw
 
 bool login_check_password(const char* md5key, int passwdenc, const char* passwd, const char* refpass)
 {
+	nullpo_ret(passwd);
+	nullpo_ret(refpass);
 	if(passwdenc == 0)
 	{
 		return (0==strcmp(passwd, refpass));
@@ -248,6 +260,7 @@ int login_lan_config_read(const char *lancfgName)
 	int line_num = 0;
 	char line[1024], w1[64], w2[64], w3[64], w4[64];
 
+	nullpo_ret(lancfgName);
 	if((fp = fopen(lancfgName, "r")) == NULL) {
 		ShowWarning("LAN Support configuration file is not found: %s\n", lancfgName);
 		return 1;
@@ -348,6 +361,7 @@ void login_fromchar_parse_auth(int fd, int id, const char *const ip)
 	}
 	else
 	{// authentication not found
+		nullpo_retv(ip);
 		ShowStatus("Char-server '%s': authentication of the account %d REFUSED (ip: %s).\n", server[id].name, account_id, ip);
 		login->fromchar_auth_ack(fd, account_id, login_id1, login_id2, sex, request_id, NULL);
 	}
@@ -409,7 +423,7 @@ void login_fromchar_account(int fd, int account_id, struct mmo_account *acc)
 		char_slots = acc->char_slots;
 		safestrncpy(pincode, acc->pincode, sizeof(pincode));
 		safestrncpy(birthdate, acc->birthdate, sizeof(birthdate));
-		if( strlen(pincode) == 0 )
+		if (pincode[0] == '\0')
 			memset(pincode,'\0',sizeof(pincode));
 
 		safestrncpy((char*)WFIFOP(fd,6), email, 40);
@@ -677,14 +691,12 @@ void login_fromchar_parse_account_offline(int fd)
 
 void login_fromchar_parse_online_accounts(int fd, int id)
 {
-	struct online_login_data *p;
-	int aid;
 	uint32 i, users;
 	login->online_db->foreach(login->online_db, login->online_db_setoffline, id); //Set all chars from this char-server offline first
 	users = RFIFOW(fd,4);
 	for (i = 0; i < users; i++) {
-		aid = RFIFOL(fd,6+i*4);
-		p = idb_ensure(login->online_db, aid, login->create_online_user);
+		int aid = RFIFOL(fd,6+i*4);
+		struct online_login_data *p = idb_ensure(login->online_db, aid, login->create_online_user);
 		p->char_server = id;
 		if (p->waiting_disconnect != INVALID_TIMER)
 		{
@@ -722,7 +734,7 @@ void login_fromchar_parse_change_pincode(int fd)
 	struct mmo_account acc;
 
 	if( accounts->load_num(accounts, &acc, RFIFOL(fd,2) ) ) {
-		strncpy( acc.pincode, (char*)RFIFOP(fd,6), 5 );
+		safestrncpy( acc.pincode, (char*)RFIFOP(fd,6), sizeof(acc.pincode) );
 		acc.pincode_change = ((unsigned int)time( NULL ));
 		accounts->save(accounts, &acc);
 	}
@@ -734,15 +746,14 @@ bool login_fromchar_parse_wrong_pincode(int fd)
 	struct mmo_account acc;
 
 	if( accounts->load_num(accounts, &acc, RFIFOL(fd,2) ) ) {
-		struct online_login_data* ld;
+		struct online_login_data* ld = (struct online_login_data*)idb_get(login->online_db,acc.account_id);
 
-		if( ( ld = (struct online_login_data*)idb_get(login->online_db,acc.account_id) ) == NULL )
-		{
+		if (ld == NULL) {
 			RFIFOSKIP(fd,6);
 			return true;
 		}
 
-		login_log( host2ip(acc.last_ip), acc.userid, 100, "PIN Code check failed" );
+		login_log(host2ip(acc.last_ip), acc.userid, 100, "PIN Code check failed");
 	}
 
 	login->remove_online_user(acc.account_id);
@@ -1011,6 +1022,9 @@ int login_mmo_auth_new(const char* userid, const char* pass, const char sex, con
 	int64 tick = timer->gettick();
 	struct mmo_account acc;
 
+	nullpo_retr(3, userid);
+	nullpo_retr(3, pass);
+	nullpo_retr(3, last_ip);
 	//Account Registration Flood Protection by [Kevin]
 	if( new_reg_tick == 0 )
 		new_reg_tick = timer->gettick();
@@ -1068,6 +1082,7 @@ int login_mmo_auth(struct login_session_data* sd, bool isServer) {
 	size_t len;
 
 	char ip[16];
+	nullpo_ret(sd);
 	ip2str(session[sd->fd]->client_addr, ip);
 
 	// DNS Blacklist check
@@ -1097,9 +1112,9 @@ int login_mmo_auth(struct login_session_data* sd, bool isServer) {
 
 	// Account creation with _M/_F
 	if( login_config.new_account_flag ) {
-		if( len > 2 && strnlen(sd->passwd, NAME_LENGTH) > 0 && // valid user and password lengths
+		if (len > 2 && sd->passwd[0] != '\0' && // valid user and password lengths
 			sd->passwdenc == 0 && // unencoded password
-			sd->userid[len-2] == '_' && memchr("FfMm", sd->userid[len-1], 4) ) // _M/_F suffix
+			sd->userid[len-2] == '_' && memchr("FfMm", sd->userid[len-1], 4)) // _M/_F suffix
 		{
 			int result;
 
@@ -1209,6 +1224,7 @@ void login_connection_problem(int fd, uint8 status)
 void login_kick(struct login_session_data* sd)
 {
 	uint8 buf[6];
+	nullpo_retv(sd);
 	WBUFW(buf,0) = 0x2734;
 	WBUFL(buf,2) = sd->account_id;
 	charif_sendallwos(-1, buf, 6);
@@ -1217,13 +1233,15 @@ void login_kick(struct login_session_data* sd)
 void login_auth_ok(struct login_session_data* sd)
 {
 	int fd = sd->fd;
-	uint32 ip = session[fd]->client_addr;
+	uint32 ip;
 
 	uint8 server_num, n;
 	uint32 subnet_char_ip;
 	struct login_auth_node* node;
 	int i;
 
+	nullpo_retv(sd);
+	ip = session[fd]->client_addr;
 	if( runflag != LOGINSERVER_ST_RUNNING )
 	{
 		// players can only login while running
@@ -1339,9 +1357,12 @@ void login_auth_ok(struct login_session_data* sd)
 
 void login_auth_failed(struct login_session_data* sd, int result)
 {
-	int fd = sd->fd;
-	uint32 ip = session[fd]->client_addr;
+	int fd;
+	uint32 ip;
+	nullpo_retv(sd);
 
+	fd = sd->fd;
+	ip = session[fd]->client_addr;
 	if (login_config.log_login)
 	{
 		const char* error;
@@ -1741,7 +1762,9 @@ void login_set_defaults()
 int login_config_read(const char* cfgName)
 {
 	char line[1024], w1[1024], w2[1024];
-	FILE* fp = fopen(cfgName, "r");
+	FILE* fp;
+	nullpo_retr(1, cfgName);
+	fp = fopen(cfgName, "r");
 	if (fp == NULL) {
 		ShowError("Configuration file (%s) not found.\n", cfgName);
 		return 1;
@@ -1814,12 +1837,12 @@ int login_config_read(const char* cfgName)
 
 			if (sscanf(w2, "%d, %32s", &group, md5) == 2) {
 				struct client_hash_node *nnode;
-				int i;
 				CREATE(nnode, struct client_hash_node, 1);
 
 				if (strcmpi(md5, "disabled") == 0) {
 					nnode->hash[0] = '\0';
 				} else {
+					int i;
 					for (i = 0; i < 32; i += 2) {
 						char buf[3];
 						unsigned int byte;
@@ -1899,6 +1922,9 @@ int do_final(void) {
 
 	HPM_login_do_final();
 
+	aFree(login->LOGIN_CONF_NAME);
+	aFree(login->LAN_CONF_NAME);
+
 	HPM->event(HPET_POST_FINAL);
 
 	ShowStatus("Finished.\n");
@@ -1939,6 +1965,39 @@ void login_hp_symbols(void) {
 	HPM->share(login,"login");
 }
 
+/**
+ * --login-config handler
+ *
+ * Overrides the default login configuration file.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(loginconfig)
+{
+	aFree(login->LOGIN_CONF_NAME);
+	login->LOGIN_CONF_NAME = aStrdup(params);
+	return true;
+}
+/**
+ * --lan-config handler
+ *
+ * Overrides the default subnet configuration file.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(lanconfig)
+{
+	aFree(login->LAN_CONF_NAME);
+	login->LAN_CONF_NAME = aStrdup(params);
+	return true;
+}
+/**
+ * Defines the local command line arguments
+ */
+void cmdline_args_init_local(void)
+{
+	CMDLINEARG_DEF2(login-config, loginconfig, "Alternative login-server configuration.", CMDLINE_OPT_PARAM);
+	CMDLINEARG_DEF2(lan-config, lanconfig, "Alternative subnet configuration.", CMDLINE_OPT_PARAM);
+}
+
 //------------------------------
 // Login server initialization
 //------------------------------
@@ -1959,31 +2018,18 @@ int do_init(int argc, char** argv)
 	// read login-server configuration
 	login_set_defaults();
 
+	login->LOGIN_CONF_NAME = aStrdup("conf/login-server.conf");
+	login->LAN_CONF_NAME   = aStrdup("conf/subnet.conf");
+
 	HPM_login_do_init();
 	HPM->symbol_defaults_sub = login_hp_symbols;
-	HPM->config_read(NULL, 0);
-#if 0
-	/* TODO: Move to common code */
-	for( i = 1; i < argc; i++ ) {
-		const char* arg = argv[i];
-		if( strcmp(arg, "--load-plugin") == 0 ) {
-			if( map->arg_next_value(arg, i, argc, true) ) {
-				RECREATE(load_extras, char *, ++load_extras_count);
-				load_extras[load_extras_count-1] = argv[++i];
-			}
-		}
-	}
-	HPM->config_read((const char * const *)load_extras, load_extras_count);
-	if (load_extras) {
-		aFree(load_extras);
-		load_extras = NULL;
-		load_extras_count = 0;
-	}
-#endif
+	cmdline->exec(argc, argv, CMDLINE_OPT_PREINIT);
+	HPM->config_read();
 	HPM->event(HPET_PRE_INIT);
 
-	login_config_read((argc > 1) ? argv[1] : LOGIN_CONF_NAME);
-	login->lan_config_read((argc > 2) ? argv[2] : LAN_CONF_NAME);
+	cmdline->exec(argc, argv, CMDLINE_OPT_NORMAL);
+	login_config_read(login->LOGIN_CONF_NAME);
+	login->lan_config_read(login->LAN_CONF_NAME);
 
 	for( i = 0; i < ARRAYLENGTH(server); ++i )
 		chrif_server_init(i);
@@ -2105,4 +2151,7 @@ void login_defaults(void) {
 	login->kick = login_kick;
 	login->login_error = login_login_error;
 	login->send_coding_key = login_send_coding_key;
+
+	login->LOGIN_CONF_NAME = NULL;
+	login->LAN_CONF_NAME = NULL;
 }

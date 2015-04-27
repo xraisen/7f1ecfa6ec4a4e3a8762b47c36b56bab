@@ -17,6 +17,7 @@
 #include "atcommand.h"
 #include "battle.h"
 #include "battleground.h"
+#include "channel.h"
 #include "chat.h"
 #include "chrif.h"
 #include "clif.h"
@@ -397,6 +398,7 @@ int map_moveblock(struct block_list *bl, int x1, int y1, int64 tick) {
  * Counts specified number of objects on given cell.
  * flag:
  *   0x1 - only count standing units
+ *   0x2 - don't count invinsible units
  * TODO: merge with bl_getall_area
  *------------------------------------------*/
 int map_count_oncell(int16 m, int16 x, int16 y, int type, int flag) {
@@ -410,29 +412,41 @@ int map_count_oncell(int16 m, int16 x, int16 y, int type, int flag) {
 	bx = x/BLOCK_SIZE;
 	by = y/BLOCK_SIZE;
 
-	if (type&~BL_MOB)
-		for( bl = map->list[m].block[bx+by*map->list[m].bxs] ; bl != NULL ; bl = bl->next )
-			if(bl->x == x && bl->y == y && bl->type&type) {
-				if(flag&1) {
-					struct unit_data *ud = unit->bl2ud(bl);
-					if(!ud || ud->walktimer == INVALID_TIMER)
-						count++;
-				} else {
-					count++;
+	if (type&~BL_MOB) {
+		for (bl = map->list[m].block[bx+by*map->list[m].bxs]; bl != NULL; bl = bl->next) {
+			if (bl->x == x && bl->y == y && bl->type&type) {
+				if (flag&0x2) {
+					struct status_change *sc = status->get_sc(bl);
+					if (sc && (sc->option&OPTION_INVISIBLE))
+						continue;
 				}
+				if (flag&0x1) {
+					struct unit_data *ud = unit->bl2ud(bl);
+					if (ud && ud->walktimer != INVALID_TIMER)
+						continue;
+				}
+				count++;
 			}
+		}
+	}
 
-	if (type&BL_MOB)
-		for( bl = map->list[m].block_mob[bx+by*map->list[m].bxs] ; bl != NULL ; bl = bl->next )
-			if(bl->x == x && bl->y == y) {
-				if(flag&1) {
-					struct unit_data *ud = unit->bl2ud(bl);
-					if(!ud || ud->walktimer == INVALID_TIMER)
-						count++;
-				} else {
-					count++;
+	if (type&BL_MOB) {
+		for (bl = map->list[m].block_mob[bx+by*map->list[m].bxs]; bl != NULL; bl = bl->next) {
+			if (bl->x == x && bl->y == y) {
+				if (flag&0x2) {
+					struct status_change *sc = status->get_sc(bl);
+					if (sc && (sc->option&OPTION_INVISIBLE))
+						continue;
 				}
+				if (flag&0x1) {
+					struct unit_data *ud = unit->bl2ud(bl);
+					if (ud && ud->walktimer != INVALID_TIMER)
+						continue;
+				}
+				count++;
 			}
+		}
+	}
 
 	return count;
 }
@@ -1238,7 +1252,6 @@ int map_vforeachinpath(int (*func)(struct block_list*, va_list), int16 m, int16 
 
 	//method specific variables
 	int magnitude2, len_limit; //The square of the magnitude
-	int k;
 	int mx0 = x0, mx1 = x1, my0 = y0, my1 = y1;
 
 	len_limit = magnitude2 = MAGNITUDE2(x0, y0, x1, y1);
@@ -1247,7 +1260,7 @@ int map_vforeachinpath(int (*func)(struct block_list*, va_list), int16 m, int16 
 
 	if (length) { //Adjust final position to fit in the given area.
 		//TODO: Find an alternate method which does not requires a square root calculation.
-		k = (int)sqrt((float)magnitude2);
+		int k = (int)sqrt((float)magnitude2);
 		mx1 = x0 + (x1 - x0) * length / k;
 		my1 = y0 + (y1 - y0) * length / k;
 		len_limit = MAGNITUDE2(x0, y0, mx1, my1);
@@ -1583,7 +1596,7 @@ int map_addflooritem(struct item *item_data,int amount,int16 m,int16 x,int16 y,i
 
 	nullpo_ret(item_data);
 
-	if(!map->searchrandfreecell(m,&x,&y,flags&2?1:0))
+	if (!map->searchrandfreecell(m, &x, &y, (flags&2)?1:0))
 		return 0;
 	r=rnd();
 
@@ -1601,11 +1614,11 @@ int map_addflooritem(struct item *item_data,int amount,int16 m,int16 x,int16 y,i
 	}
 
 	fitem->first_get_charid = first_charid;
-	fitem->first_get_tick = timer->gettick() + (flags&1 ? battle_config.mvp_item_first_get_time : battle_config.item_first_get_time);
+	fitem->first_get_tick = timer->gettick() + ((flags&1) ? battle_config.mvp_item_first_get_time : battle_config.item_first_get_time);
 	fitem->second_get_charid = second_charid;
-	fitem->second_get_tick = fitem->first_get_tick + (flags&1 ? battle_config.mvp_item_second_get_time : battle_config.item_second_get_time);
+	fitem->second_get_tick = fitem->first_get_tick + ((flags&1) ? battle_config.mvp_item_second_get_time : battle_config.item_second_get_time);
 	fitem->third_get_charid = third_charid;
-	fitem->third_get_tick = fitem->second_get_tick + (flags&1 ? battle_config.mvp_item_third_get_time : battle_config.item_third_get_time);
+	fitem->third_get_tick = fitem->second_get_tick + ((flags&1) ? battle_config.mvp_item_third_get_time : battle_config.item_third_get_time);
 
 	memcpy(&fitem->item_data,item_data,sizeof(*item_data));
 	fitem->item_data.amount=amount;
@@ -1636,7 +1649,6 @@ void map_addnickdb(int charid, const char* nick)
 {
 	struct charid2nick* p;
 	struct charid_request* req;
-	struct map_session_data* sd;
 
 	if( map->charid2sd(charid) )
 		return;// already online
@@ -1644,11 +1656,12 @@ void map_addnickdb(int charid, const char* nick)
 	p = idb_ensure(map->nick_db, charid, map->create_charid2nick);
 	safestrncpy(p->nick, nick, sizeof(p->nick));
 
-	while( p->requests ) {
+	while (p->requests) {
+		struct map_session_data* sd;
 		req = p->requests;
 		p->requests = req->next;
 		sd = map->charid2sd(req->charid);
-		if( sd )
+		if (sd)
 			clif->solved_charname(sd->fd, charid, p->nick);
 		aFree(req);
 	}
@@ -1660,17 +1673,17 @@ void map_delnickdb(int charid, const char* name)
 {
 	struct charid2nick* p;
 	struct charid_request* req;
-	struct map_session_data* sd;
 	DBData data;
 
 	if (!map->nick_db->remove(map->nick_db, DB->i2key(charid), &data) || (p = DB->data2ptr(&data)) == NULL)
 		return;
 
-	while( p->requests ) {
+	while (p->requests) {
+		struct map_session_data* sd;
 		req = p->requests;
 		p->requests = req->next;
 		sd = map->charid2sd(req->charid);
-		if( sd )
+		if (sd)
 			clif->solved_charname(sd->fd, charid, name);
 		aFree(req);
 	}
@@ -1787,7 +1800,7 @@ int map_quit(struct map_session_data *sd) {
 	if( sd->bg_id && !sd->bg_queue.arena ) /* TODO: dump this chunk after bg_queue is fully enabled */
 		bg->team_leave(sd,BGTL_QUIT);
 
-	if( sd->state.autotrade && runflag != MAPSERVER_ST_SHUTDOWN && !hChSys.closing )
+	if (sd->state.autotrade && runflag != MAPSERVER_ST_SHUTDOWN && !channel->config->closing)
 		pc->autotrade_update(sd,PAUC_REMOVE);
 
 	skill->cooldown_save(sd);
@@ -1844,11 +1857,7 @@ int map_quit(struct map_session_data *sd) {
 		unit->remove_map(&sd->ed->bl,CLR_TELEPORT,ALC_MARK);
 	}
 
-	if( hChSys.local && map->list[sd->bl.m].channel && idb_exists(map->list[sd->bl.m].channel->users, sd->status.char_id) ) {
-		clif->chsys_left(map->list[sd->bl.m].channel,sd);
-	}
-
-	clif->chsys_quit(sd);
+	channel->quit(sd);
 
 	unit->remove_map_pc(sd,CLR_RESPAWN);
 
@@ -2455,7 +2464,7 @@ int16 map_mapname2mapid(const char* name) {
  *------------------------------------------*/
 int16 map_mapindex2mapid(unsigned short map_index) {
 
-	if (!map_index || map_index > MAX_MAPINDEX)
+	if (!map_index || map_index >= MAX_MAPINDEX)
 		return -1;
 
 	return map->index2mapid[map_index];
@@ -2544,16 +2553,15 @@ int map_random_dir(struct block_list *bl, int16 *x, int16 *y)
 {
 	short xi = *x-bl->x;
 	short yi = *y-bl->y;
-	short i=0, j;
+	short i=0;
 	int dist2 = xi*xi + yi*yi;
 	short dist = (short)sqrt((float)dist2);
-	short segment;
 
 	if (dist < 1) dist =1;
 
 	do {
-		j = 1 + 2*(rnd()%4); //Pick a random diagonal direction
-		segment = 1+(rnd()%dist); //Pick a random interval from the whole vector in that direction
+		int j = 1 + 2*(rnd()%4); //Pick a random diagonal direction
+		short segment = 1+(rnd()%dist); //Pick a random interval from the whole vector in that direction
 		xi = bl->x + segment*dirx[j];
 		segment = (short)sqrt((float)(dist2 - segment*segment)); //The complement of the previously picked segment
 		yi = bl->y + segment*diry[j];
@@ -2600,10 +2608,10 @@ int map_cell2gat(struct mapcell cell) {
 	return 1; // default to 'wall'
 }
 void map_cellfromcache(struct map_data *m) {
-	char decode_buffer[MAX_MAP_SIZE];
-	struct map_cache_map_info *info = NULL;
+	struct map_cache_map_info *info = (struct map_cache_map_info *)m->cellPos;
 
-	if( (info = (struct map_cache_map_info *)m->cellPos) ) {
+	if (info) {
+		char decode_buffer[MAX_MAP_SIZE];
 		unsigned long size, xy;
 		int i;
 
@@ -3065,70 +3073,66 @@ int map_delmap(char* mapname) {
 	}
 	return 0;
 }
+
+/**
+ *
+ **/
+void map_zone_clear_single(struct map_zone_data *zone) {
+	int i;
+	
+	for(i = 0; i < zone->disabled_skills_count; i++) {
+		aFree(zone->disabled_skills[i]);
+	}
+	
+	if( zone->disabled_skills )
+		aFree(zone->disabled_skills);
+	
+	if( zone->disabled_items )
+		aFree(zone->disabled_items);
+	
+	if( zone->cant_disable_items )
+		aFree(zone->cant_disable_items);
+	
+	for(i = 0; i < zone->mapflags_count; i++) {
+		aFree(zone->mapflags[i]);
+	}
+	
+	if( zone->mapflags )
+		aFree(zone->mapflags);
+	
+	for(i = 0; i < zone->disabled_commands_count; i++) {
+		aFree(zone->disabled_commands[i]);
+	}
+	
+	if( zone->disabled_commands )
+		aFree(zone->disabled_commands);
+	
+	for(i = 0; i < zone->capped_skills_count; i++) {
+		aFree(zone->capped_skills[i]);
+	}
+	
+	if( zone->capped_skills )
+		aFree(zone->capped_skills);
+}
+/**
+ *
+ **/
 void map_zone_db_clear(void) {
 	struct map_zone_data *zone;
-	int i;
-
 	DBIterator *iter = db_iterator(map->zone_db);
+	
 	for(zone = dbi_first(iter); dbi_exists(iter); zone = dbi_next(iter)) {
-		for(i = 0; i < zone->disabled_skills_count; i++) {
-			aFree(zone->disabled_skills[i]);
-		}
-		aFree(zone->disabled_skills);
-		aFree(zone->disabled_items);
-		for(i = 0; i < zone->mapflags_count; i++) {
-			aFree(zone->mapflags[i]);
-		}
-		aFree(zone->mapflags);
-		for(i = 0; i < zone->disabled_commands_count; i++) {
-			aFree(zone->disabled_commands[i]);
-		}
-		aFree(zone->disabled_commands);
-		for(i = 0; i < zone->capped_skills_count; i++) {
-			aFree(zone->capped_skills[i]);
-		}
-		aFree(zone->capped_skills);
+		map->zone_clear_single(zone);
 	}
+	
 	dbi_destroy(iter);
 
 	db_destroy(map->zone_db);/* will aFree(zone) */
 
 	/* clear the pk zone stuff */
-	for(i = 0; i < map->zone_pk.disabled_skills_count; i++) {
-		aFree(map->zone_pk.disabled_skills[i]);
-	}
-	aFree(map->zone_pk.disabled_skills);
-	aFree(map->zone_pk.disabled_items);
-	for(i = 0; i < map->zone_pk.mapflags_count; i++) {
-		aFree(map->zone_pk.mapflags[i]);
-	}
-	aFree(map->zone_pk.mapflags);
-	for(i = 0; i < map->zone_pk.disabled_commands_count; i++) {
-		aFree(map->zone_pk.disabled_commands[i]);
-	}
-	aFree(map->zone_pk.disabled_commands);
-	for(i = 0; i < map->zone_pk.capped_skills_count; i++) {
-		aFree(map->zone_pk.capped_skills[i]);
-	}
-	aFree(map->zone_pk.capped_skills);
+	map->zone_clear_single(&map->zone_pk);
 	/* clear the main zone stuff */
-	for(i = 0; i < map->zone_all.disabled_skills_count; i++) {
-		aFree(map->zone_all.disabled_skills[i]);
-	}
-	aFree(map->zone_all.disabled_skills);
-	aFree(map->zone_all.disabled_items);
-	for(i = 0; i < map->zone_all.mapflags_count; i++) {
-		aFree(map->zone_all.mapflags[i]);
-	}
-	aFree(map->zone_all.mapflags);
-	for(i = 0; i < map->zone_all.disabled_commands_count; i++) {
-		aFree(map->zone_all.disabled_commands[i]);
-	}
-	aFree(map->zone_all.disabled_commands);
-	for(i = 0; i < map->zone_all.capped_skills_count; i++) {
-		aFree(map->zone_all.capped_skills[i]);
-	}
-	aFree(map->zone_all.capped_skills);
+	map->zone_clear_single(&map->zone_all);
 }
 void map_clean(int i) {
 	int v;
@@ -3145,10 +3149,10 @@ void map_clean(int i) {
 	}
 
 	if( map->list[i].unit_count ) {
-		for(v = 0; v < map->list[i].unit_count; v++) {
-			aFree(map->list[i].units[v]);
-		}
 		if( map->list[i].units ) {
+			for(v = 0; v < map->list[i].unit_count; v++) {
+				aFree(map->list[i].units[v]);
+			}
 			aFree(map->list[i].units);
 			map->list[i].units = NULL;
 		}
@@ -3156,10 +3160,10 @@ void map_clean(int i) {
 	}
 
 	if( map->list[i].skill_count ) {
-		for(v = 0; v < map->list[i].skill_count; v++) {
-			aFree(map->list[i].skills[v]);
-		}
 		if( map->list[i].skills ) {
+			for(v = 0; v < map->list[i].skill_count; v++) {
+					aFree(map->list[i].skills[v]);
+				}
 			aFree(map->list[i].skills);
 			map->list[i].skills = NULL;
 		}
@@ -3167,10 +3171,10 @@ void map_clean(int i) {
 	}
 
 	if( map->list[i].zone_mf_count ) {
-		for(v = 0; v < map->list[i].zone_mf_count; v++) {
-			aFree(map->list[i].zone_mf[v]);
-		}
 		if( map->list[i].zone_mf ) {
+			for(v = 0; v < map->list[i].zone_mf_count; v++) {
+					aFree(map->list[i].zone_mf[v]);
+				}
 			aFree(map->list[i].zone_mf);
 			map->list[i].zone_mf = NULL;
 		}
@@ -3178,7 +3182,7 @@ void map_clean(int i) {
 	}
 
 	if( map->list[i].channel )
-		clif->chsys_delete(map->list[i].channel);
+		channel->delete(map->list[i].channel);
 }
 void do_final_maps(void) {
 	int i, v = 0;
@@ -3198,10 +3202,10 @@ void do_final_maps(void) {
 		}
 
 		if( map->list[i].unit_count ) {
-			for(v = 0; v < map->list[i].unit_count; v++) {
-				aFree(map->list[i].units[v]);
-			}
 			if( map->list[i].units ) {
+				for(v = 0; v < map->list[i].unit_count; v++) {
+					aFree(map->list[i].units[v]);
+				}
 				aFree(map->list[i].units);
 				map->list[i].units = NULL;
 			}
@@ -3209,10 +3213,10 @@ void do_final_maps(void) {
 		}
 
 		if( map->list[i].skill_count ) {
-			for(v = 0; v < map->list[i].skill_count; v++) {
-				aFree(map->list[i].skills[v]);
-			}
 			if( map->list[i].skills ) {
+				for(v = 0; v < map->list[i].skill_count; v++) {
+					aFree(map->list[i].skills[v]);
+				}
 				aFree(map->list[i].skills);
 				map->list[i].skills = NULL;
 			}
@@ -3220,10 +3224,10 @@ void do_final_maps(void) {
 		}
 
 		if( map->list[i].zone_mf_count ) {
-			for(v = 0; v < map->list[i].zone_mf_count; v++) {
-				aFree(map->list[i].zone_mf[v]);
-			}
 			if( map->list[i].zone_mf ) {
+				for(v = 0; v < map->list[i].zone_mf_count; v++) {
+					aFree(map->list[i].zone_mf[v]);
+				}
 				aFree(map->list[i].zone_mf);
 				map->list[i].zone_mf = NULL;
 			}
@@ -3237,19 +3241,21 @@ void do_final_maps(void) {
 			aFree(map->list[i].drop_list);
 
 		if( map->list[i].channel )
-			clif->chsys_delete(map->list[i].channel);
+			channel->delete(map->list[i].channel);
 		
 		if( map->list[i].qi_data )
 			aFree(map->list[i].qi_data);
 		
-		for( v = 0; v < map->list[i].hdatac; v++ ) {
-			if( map->list[i].hdata[v]->flag.free ) {
-				aFree(map->list[i].hdata[v]->data);
-			}
-			aFree(map->list[i].hdata[v]);
-		}
 		if( map->list[i].hdata )
+		{
+			for( v = 0; v < map->list[i].hdatac; v++ ) {
+				if( map->list[i].hdata[v]->flag.free ) {
+					aFree(map->list[i].hdata[v]->data);
+				}
+				aFree(map->list[i].hdata[v]);
+			}
 			aFree(map->list[i].hdata);
+		}
 	}
 
 	map->zone_db_clear();
@@ -3338,10 +3344,10 @@ int map_waterheight(char* mapname)
 	char *rsw, *found;
 
 	//Look up for the rsw
-	sprintf(fn, "data\\%s.rsw", mapname);
+	snprintf(fn, sizeof(fn), "data\\%s.rsw", mapname);
 
-	found = grfio_find_file(fn);
-	if (found) strcpy(fn, found); // replace with real name
+	if ( (found = grfio_find_file(fn)) )
+		safestrncpy(fn, found, sizeof(fn)); // replace with real name
 
 	// read & convert fn
 	rsw = (char *) grfio_read (fn);
@@ -3589,6 +3595,8 @@ int map_config_read(char *cfgName) {
 			map->enable_grf = config_switch(w2);
 		else if (strcmpi(w1, "console_msg_log") == 0)
 			console_msg_log = atoi(w2);//[Ind]
+		else if (strcmpi(w1, "default_language") == 0)
+			safestrncpy(map->default_lang_str, w2, sizeof(map->default_lang_str));
 		else if (strcmpi(w1, "import") == 0)
 			map->config_read(w2);
 		else
@@ -3674,7 +3682,12 @@ void map_reloadnpc_sub(char *cfgName) {
 	fclose(fp);
 }
 
-void map_reloadnpc(bool clear, const char * const *extra_scripts, int extra_scripts_count) {
+/**
+ * Reloads all the scripts.
+ *
+ * @param clear whether to clear the script list before reloading.
+ */
+void map_reloadnpc(bool clear) {
 	int i;
 	if (clear)
 		npc->addsrcfile("clear"); // this will clear the current script list
@@ -3686,8 +3699,8 @@ void map_reloadnpc(bool clear, const char * const *extra_scripts, int extra_scri
 #endif
 
 	// Append extra scripts
-	for( i = 0; i < extra_scripts_count; i++ ) {
-		npc->addsrcfile(extra_scripts[i]);
+	for( i = 0; i < map->extra_scripts_count; i++ ) {
+		npc->addsrcfile(map->extra_scripts[i]);
 	}
 }
 
@@ -3707,34 +3720,32 @@ int inter_config_read(char *cfgName) {
 			continue;
 		/* table names */
 		if(strcmpi(w1,"item_db_db")==0)
-			strcpy(map->item_db_db,w2);
+			safestrncpy(map->item_db_db, w2, sizeof(map->item_db_db));
 		else if(strcmpi(w1,"mob_db_db")==0)
-			strcpy(map->mob_db_db,w2);
+			safestrncpy(map->mob_db_db, w2, sizeof(map->mob_db_db));
 		else if(strcmpi(w1,"item_db2_db")==0)
-			strcpy(map->item_db2_db,w2);
-		else if(strcmpi(w1,"item_db_re_db")==0)
-			strcpy(map->item_db_re_db,w2);
+			safestrncpy(map->item_db2_db, w2, sizeof(map->item_db2_db));
 		else if(strcmpi(w1,"mob_db2_db")==0)
-			strcpy(map->mob_db2_db,w2);
-		else if(strcmpi(w1,"mob_skill_db_db")==0)
-			strcpy(map->mob_skill_db_db,w2);
+			safestrncpy(map->mob_db2_db, w2, sizeof(map->mob_db2_db));
+		else if(strcmpi(w1, "mob_skill_db_db") == 0)
+			safestrncpy(map->mob_skill_db_db, w2, sizeof(map->mob_skill_db_db));
 		else if(strcmpi(w1,"mob_skill_db2_db")==0)
-			strcpy(map->mob_skill_db2_db,w2);
+			safestrncpy(map->mob_skill_db2_db, w2, sizeof(map->mob_skill_db2_db));
 		else if(strcmpi(w1,"interreg_db")==0)
-			strcpy(map->interreg_db,w2);
+			safestrncpy(map->interreg_db, w2, sizeof(map->interreg_db));
 		/* map sql stuff */
 		else if(strcmpi(w1,"map_server_ip")==0)
-			strcpy(map->server_ip, w2);
+			safestrncpy(map->server_ip, w2, sizeof(map->server_ip));
 		else if(strcmpi(w1,"map_server_port")==0)
 			map->server_port=atoi(w2);
 		else if(strcmpi(w1,"map_server_id")==0)
-			strcpy(map->server_id, w2);
+			safestrncpy(map->server_id, w2, sizeof(map->server_id));
 		else if(strcmpi(w1,"map_server_pw")==0)
-			strcpy(map->server_pw, w2);
+			safestrncpy(map->server_pw, w2, sizeof(map->server_pw));
 		else if(strcmpi(w1,"map_server_db")==0)
-			strcpy(map->server_db, w2);
+			safestrncpy(map->server_db, w2, sizeof(map->server_db));
 		else if(strcmpi(w1,"default_codepage")==0)
-			strcpy(map->default_codepage, w2);
+			safestrncpy(map->default_codepage, w2, sizeof(map->default_codepage));
 		else if(strcmpi(w1,"use_sql_item_db")==0) {
 			map->db_use_sql_item_db = config_switch(w2);
 			ShowStatus ("Using item database as SQL: '%s'\n", w2);
@@ -3748,22 +3759,22 @@ int inter_config_read(char *cfgName) {
 			ShowStatus ("Using monster skill database as SQL: '%s'\n", w2);
 		}
 		else if(strcmpi(w1,"autotrade_merchants_db")==0)
-			strcpy(map->autotrade_merchants_db, w2);
+			safestrncpy(map->autotrade_merchants_db, w2, sizeof(map->autotrade_merchants_db));
 		else if(strcmpi(w1,"autotrade_data_db")==0)
-			strcpy(map->autotrade_data_db, w2);
+			safestrncpy(map->autotrade_data_db, w2, sizeof(map->autotrade_data_db));
 		else if(strcmpi(w1,"npc_market_data_db")==0)
-			strcpy(map->npc_market_data_db, w2);
+			safestrncpy(map->npc_market_data_db, w2, sizeof(map->npc_market_data_db));
 		/* sql log db */
 		else if(strcmpi(w1,"log_db_ip")==0)
-			strcpy(logs->db_ip, w2);
+			safestrncpy(logs->db_ip, w2, sizeof(logs->db_ip));
 		else if(strcmpi(w1,"log_db_id")==0)
-			strcpy(logs->db_id, w2);
+			safestrncpy(logs->db_id, w2, sizeof(logs->db_id));
 		else if(strcmpi(w1,"log_db_pw")==0)
-			strcpy(logs->db_pw, w2);
+			safestrncpy(logs->db_pw, w2, sizeof(logs->db_pw));
 		else if(strcmpi(w1,"log_db_port")==0)
 			logs->db_port = atoi(w2);
 		else if(strcmpi(w1,"log_db_db")==0)
-			strcpy(logs->db_name, w2);
+			safestrncpy(logs->db_name, w2, sizeof(logs->db_name));
 		/* mapreg */
 		else if( mapreg->config_read(w1,w2) )
 			continue;
@@ -3791,7 +3802,7 @@ int map_sql_init(void)
 		exit(EXIT_FAILURE);
 	ShowStatus("connect success! (Map Server Connection)\n");
 
-	if( strlen(map->default_codepage) > 0 )
+	if (map->default_codepage[0] != '\0')
 		if ( SQL_ERROR == SQL->SetEncoding(map->mysql_handle, map->default_codepage) )
 			Sql_ShowDebug(map->mysql_handle);
 
@@ -3819,7 +3830,7 @@ int map_sql_close(void)
 struct map_zone_data *map_merge_zone(struct map_zone_data *main, struct map_zone_data *other) {
 	char newzone[MAP_ZONE_NAME_LENGTH];
 	struct map_zone_data *zone = NULL;
-	int cursor, i;
+	int cursor, i, j;
 	
 	sprintf(newzone, "%s+%s",main->name,other->name);
 	
@@ -3848,14 +3859,31 @@ struct map_zone_data *map_merge_zone(struct map_zone_data *main, struct map_zone
 		memcpy(zone->disabled_skills[cursor], other->disabled_skills[i], sizeof(struct map_zone_disabled_skill_entry));
 	}
 	
+	for(j = 0; j < main->cant_disable_items_count; j++) {
+		for(i = 0; i < other->disabled_items_count; i++) {
+			if( other->disabled_items[i] == main->cant_disable_items[j] ) {
+				zone->disabled_items_count--;
+				break;
+			}
+		}
+	}
+
 	CREATE(zone->disabled_items, int, zone->disabled_items_count );
 	
 	for(i = 0, cursor = 0; i < main->disabled_items_count; i++, cursor++ ) {
 		zone->disabled_items[cursor] = main->disabled_items[i];
 	}
 	
-	for(i = 0; i < other->disabled_items_count; i++, cursor++ ) {
+	for(i = 0; i < other->disabled_items_count; i++) {
+		for(j = 0; j < main->cant_disable_items_count; j++) {
+			if( other->disabled_items[i] == main->cant_disable_items[j] ) {
+				break;
+			}
+		}
+		if( j != main->cant_disable_items_count )
+			continue;
 		zone->disabled_items[cursor] = other->disabled_items[i];
+		cursor++;
 	}
 
 	CREATE(zone->mapflags, char *, zone->mapflags_count );
@@ -4564,7 +4592,7 @@ bool map_zone_mf_cache(int m, char *flag, char *params) {
 	} else if ( !strcmpi(flag,"invincible_time_inc") ) {
 		if( !state ) {
 			if( map->list[m].invincible_time_inc != 0 ) {
-				sprintf(rflag,"invincible_time_inc\t%d",map->list[m].invincible_time_inc);
+				sprintf(rflag,"invincible_time_inc\t%u",map->list[m].invincible_time_inc);
 				map_zone_mf_cache_add(m,rflag);
 			}
 		} if( sscanf(params, "%d", &state) == 1 ) {
@@ -4834,7 +4862,7 @@ void read_map_zone_db(void) {
 		config_setting_t *caps;
 		const char *name;
 		const char *zonename;
-		int i,h,v;
+		int i,h,v,j;
 		int zone_count = 0, disabled_skills_count = 0, disabled_items_count = 0, mapflags_count = 0,
 			disabled_commands_count = 0, capped_skills_count = 0;
 		enum map_zone_skill_subtype subtype;
@@ -4932,12 +4960,19 @@ void read_map_zone_db(void) {
 				}
 				/* all ok, process */
 				CREATE( zone->disabled_items, int, disabled_items_count );
-				for(h = 0, v = 0; h < libconfig->setting_length(items); h++) {
+				if( (libconfig->setting_length(items) - disabled_items_count) > 0 ) { //Some are forcefully enabled
+					zone->cant_disable_items_count = libconfig->setting_length(items) - disabled_items_count;
+					CREATE(zone->cant_disable_items, int, zone->cant_disable_items_count);
+					
+				}
+				for(h = 0, v = 0, j = 0; h < libconfig->setting_length(items); h++) {
 					config_setting_t *item = libconfig->setting_get_elem(items, h);
 
+					name = config_setting_name(item);
 					if( libconfig->setting_get_bool(item) ) { /* only add if enabled */
-						name = config_setting_name(item);
 						zone->disabled_items[v++] = map->zone_str2itemid(name);
+					} else { /** forcefully enabled **/
+						zone->cant_disable_items[j++] = map->zone_str2itemid(name);
 					}
 
 				}
@@ -5068,7 +5103,6 @@ void read_map_zone_db(void) {
 				int mapflags_count_i = 0; /* mapflag count from inherit zone */
 				int disabled_commands_count_i = 0; /* commands count from inherit zone */
 				int capped_skills_count_i = 0; /* skill capped count from inherit zone */
-				int j;
 
 				name = libconfig->setting_get_string_elem(inherit_tree, h);
 				libconfig->setting_lookup_string(zone_e, "name", &zonename);/* will succeed for we validated it earlier */
@@ -5340,7 +5374,7 @@ int do_final(void) {
 
 	ShowStatus("Terminating...\n");
 	
-	hChSys.closing = true;
+	channel->config->closing = true;
 	HPM->event(HPET_FINAL);
 	
 	if (map->cpsd) aFree(map->cpsd);
@@ -5362,14 +5396,23 @@ int do_final(void) {
 	}
 	ShowStatus("Cleaned up %d maps."CL_CLL"\n", map->count);
 
+	if (map->extra_scripts) {
+		for (i = 0; i < map->extra_scripts_count; i++)
+			aFree(map->extra_scripts[i]);
+		aFree(map->extra_scripts);
+		map->extra_scripts = NULL;
+		map->extra_scripts_count = 0;
+	}
+
 	map->id_db->foreach(map->id_db,map->cleanup_db_sub);
 	chrif->char_reset_offline();
 	chrif->flush();
 
 	atcommand->final();
 	battle->final();
+	ircbot->final();/* before channel. */
+	channel->final();
 	chrif->final();
-	ircbot->final();/* before clif. */
 	clif->final();
 	npc->final();
 	quest->final();
@@ -5425,8 +5468,17 @@ int do_final(void) {
 	if( !map->enable_grf )
 		aFree(map->cache_buffer);
 
-	HPM->event(HPET_POST_FINAL);
+	aFree(map->MAP_CONF_NAME);
+	aFree(map->BATTLE_CONF_FILENAME);
+	aFree(map->ATCOMMAND_CONF_FILENAME);
+	aFree(map->SCRIPT_CONF_NAME);
+	aFree(map->MSG_CONF_NAME);
+	aFree(map->GRF_PATH_FILENAME);
+	aFree(map->INTER_CONF_NAME);
+	aFree(map->LOG_CONF_NAME);
 	
+	HPM->event(HPET_POST_FINAL);
+
 	ShowStatus("Finished.\n");
 	return map->retval;
 }
@@ -5461,45 +5513,6 @@ void do_abort(void)
 	chrif->flush();
 }
 
-/*======================================================
-* Map-Server Version Screen [MC Cameri]
-*------------------------------------------------------*/
-void map_helpscreen(bool do_exit)
-{
-	ShowInfo("Usage: %s [options]\n", SERVER_NAME);
-	ShowInfo("\n");
-	ShowInfo("Options:\n");
-	ShowInfo("  -?, -h [--help]           Displays this help screen.\n");
-	ShowInfo("  -v [--version]            Displays the server's version.\n");
-	ShowInfo("  --run-once                Closes server after loading (testing).\n");
-	ShowInfo("  --map-config <file>       Alternative map-server configuration.\n");
-	ShowInfo("  --battle-config <file>    Alternative battle configuration.\n");
-	ShowInfo("  --atcommand-config <file> Alternative atcommand configuration.\n");
-	ShowInfo("  --script-config <file>    Alternative script configuration.\n");
-	ShowInfo("  --msg-config <file>       Alternative message configuration.\n");
-	ShowInfo("  --grf-path <file>         Alternative GRF path configuration.\n");
-	ShowInfo("  --inter-config <file>     Alternative inter-server configuration.\n");
-	ShowInfo("  --log-config <file>       Alternative logging configuration.\n");
-	ShowInfo("  --script-check            Doesn't run the server, only tests the\n");
-	ShowInfo("                            scripts passed through --load-script.\n");
-	ShowInfo("  --load-script <file>      Loads an additional script (can be repeated).\n");
-	ShowInfo("  --load-plugin <name>      Loads an additional plugin (can be repeated).\n");
-	HPM->arg_help();/* display help for commands implemented thru HPM */
-	if( do_exit )
-		exit(EXIT_SUCCESS);
-}
-
-/*======================================================
- * Map-Server Version Screen [MC Cameri]
- *------------------------------------------------------*/
-void map_versionscreen(bool do_exit) {
-	ShowInfo(CL_GREEN"Website/Forum:"CL_RESET"\thttp://hercules.ws/\n");
-	ShowInfo(CL_GREEN"IRC Channel:"CL_RESET"\tirc://irc.rizon.net/#Hercules\n");
-	ShowInfo("Open "CL_WHITE"readme.txt"CL_RESET" for more information.\n");
-	if( do_exit )
-		exit(EXIT_SUCCESS);
-}
-
 void set_server_type(void) {
 	SERVER_TYPE = SERVER_TYPE_MAP;
 }
@@ -5524,17 +5537,6 @@ void do_shutdown(void)
 	}
 }
 
-bool map_arg_next_value(const char* option, int i, int argc, bool must)
-{
-	if( i >= argc-1 ) {
-		if( must )
-			ShowWarning("Missing value for option '%s'.\n", option);
-		return false;
-	}
-
-	return true;
-}
-
 CPCMD(gm_position) {
 	int x = 0, y = 0, m = 0;
 	char map_name[25];
@@ -5544,7 +5546,7 @@ CPCMD(gm_position) {
 		return;
 	}
 
-	if ( (m = map->mapname2mapid(map_name) <= 0 ) ) {
+	if ((m = map->mapname2mapid(map_name)) <= 0) {
 		ShowError("gm:info '"CL_WHITE"%s"CL_RESET"' is not a known map\n",map_name);
 		return;
 	}
@@ -5581,9 +5583,9 @@ void map_cp_defaults(void) {
 	/* default HCP data */
 	map->cpsd = pc->get_dummy_sd();
 	strcpy(map->cpsd->status.name, "Hercules Console");
-	map->cpsd->bl.x = MAP_DEFAULT_X;
-	map->cpsd->bl.y = MAP_DEFAULT_Y;
-	map->cpsd->bl.m = map->mapname2mapid(MAP_DEFAULT);
+	map->cpsd->bl.x = mapindex->default_x;
+	map->cpsd->bl.y = mapindex->default_y;
+	map->cpsd->bl.m = map->mapname2mapid(mapindex->default_map);
 
 	console->input->addCommand("gm:info",CPCMD_A(gm_position));
 	console->input->addCommand("gm:use",CPCMD_A(gm_use));
@@ -5596,6 +5598,7 @@ void map_hp_symbols(void) {
 	HPM->share(battle,"battle");
 	HPM->share(bg,"battlegrounds");
 	HPM->share(buyingstore,"buyingstore");
+	HPM->share(channel,"channel");
 	HPM->share(clif,"clif");
 	HPM->share(chrif,"chrif");
 	HPM->share(guild,"guild");
@@ -5651,6 +5654,7 @@ void map_load_defaults(void) {
 	battle_defaults();
 	battleground_defaults();
 	buyingstore_defaults();
+	channel_defaults();
 	clif_defaults();
 	chrif_defaults();
 	guild_defaults();
@@ -5687,12 +5691,179 @@ void map_load_defaults(void) {
 	npc_chat_defaults();
 #endif
 }
+/**
+ * --run-once handler
+ *
+ * Causes the server to run its loop once, and shutdown. Useful for testing.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(runonce)
+{
+	runflag = CORE_ST_STOP;
+	return true;
+}
+/**
+ * --map-config handler
+ *
+ * Overrides the default map-server configuration filename.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(mapconfig)
+{
+	aFree(map->MAP_CONF_NAME);
+	map->MAP_CONF_NAME = aStrdup(params);
+	return true;
+}
+/**
+ * --battle-config handler
+ *
+ * Overrides the default battle configuration filename.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(battleconfig)
+{
+	aFree(map->BATTLE_CONF_FILENAME);
+	map->BATTLE_CONF_FILENAME = aStrdup(params);
+	return true;
+}
+/**
+ * --atcommand-config handler
+ *
+ * Overrides the default atcommands configuration filename.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(atcommandconfig)
+{
+	aFree(map->ATCOMMAND_CONF_FILENAME);
+	map->ATCOMMAND_CONF_FILENAME = aStrdup(params);
+	return true;
+}
+/**
+ * --script-config handler
+ *
+ * Overrides the default script configuration filename.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(scriptconfig)
+{
+	aFree(map->SCRIPT_CONF_NAME);
+	map->SCRIPT_CONF_NAME = aStrdup(params);
+	return true;
+}
+/**
+ * --msg-config handler
+ *
+ * Overrides the default messages configuration filename.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(msgconfig)
+{
+	aFree(map->MSG_CONF_NAME);
+	map->MSG_CONF_NAME = aStrdup(params);
+	return true;
+}
+/**
+ * --grf-path handler
+ *
+ * Overrides the default grf configuration filename.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(grfpath)
+{
+	aFree(map->GRF_PATH_FILENAME);
+	map->GRF_PATH_FILENAME = aStrdup(params);
+	return true;
+}
+/**
+ * --inter-config handler
+ *
+ * Overrides the default inter-server configuration filename.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(interconfig)
+{
+	aFree(map->INTER_CONF_NAME);
+	map->INTER_CONF_NAME = aStrdup(params);
+	return true;
+}
+/**
+ * --log-config handler
+ *
+ * Overrides the default log configuration filename.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(logconfig)
+{
+	aFree(map->LOG_CONF_NAME);
+	map->LOG_CONF_NAME = aStrdup(params);
+	return true;
+}
+/**
+ * --script-check handler
+ *
+ * Enables script-check mode. Checks scripts and quits without running.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(scriptcheck)
+{
+	map->minimal = true;
+	runflag = CORE_ST_STOP;
+	map->scriptcheck = true;
+	return true;
+}
+/**
+ * --load-script handler
+ *
+ * Adds a filename to the script auto-load list.
+ * @see cmdline->exec
+ */
+static CMDLINEARG(loadscript)
+{
+	RECREATE(map->extra_scripts, char *, ++map->extra_scripts_count);
+	map->extra_scripts[map->extra_scripts_count-1] = aStrdup(params);
+	return true;
+}
+
+/**
+ * --generate-translations
+ *
+ * Creates "./generated_translations.pot"
+ * @see cmdline->exec
+ **/
+static CMDLINEARG(generatetranslations) {
+	script->lang_export_file = aStrdup("./generated_translations.pot");
+	
+	if( !(script->lang_export_fp = fopen(script->lang_export_file,"wb")) ) {
+		ShowError("export-dialog: failed to open '%s' for writing\n",script->lang_export_file);
+	}
+	
+	runflag = CORE_ST_STOP;
+	return true;
+}
+
+/**
+ * Defines the local command line arguments
+ */
+void cmdline_args_init_local(void)
+{
+	CMDLINEARG_DEF2(run-once, runonce, "Closes server after loading (testing).", CMDLINE_OPT_NORMAL);
+	CMDLINEARG_DEF2(map-config, mapconfig, "Alternative map-server configuration.", CMDLINE_OPT_NORMAL|CMDLINE_OPT_PARAM);
+	CMDLINEARG_DEF2(battle-config, battleconfig, "Alternative battle configuration.", CMDLINE_OPT_NORMAL|CMDLINE_OPT_PARAM);
+	CMDLINEARG_DEF2(atcommand-config, atcommandconfig, "Alternative atcommand configuration.", CMDLINE_OPT_NORMAL|CMDLINE_OPT_PARAM);
+	CMDLINEARG_DEF2(script-config, scriptconfig, "Alternative script configuration.", CMDLINE_OPT_NORMAL|CMDLINE_OPT_PARAM);
+	CMDLINEARG_DEF2(msg-config, msgconfig, "Alternative message configuration.", CMDLINE_OPT_NORMAL|CMDLINE_OPT_PARAM);
+	CMDLINEARG_DEF2(grf-path, grfpath, "Alternative GRF path configuration.", CMDLINE_OPT_NORMAL|CMDLINE_OPT_PARAM);
+	CMDLINEARG_DEF2(inter-config, interconfig, "Alternative inter-server configuration.", CMDLINE_OPT_NORMAL|CMDLINE_OPT_PARAM);
+	CMDLINEARG_DEF2(log-config, logconfig, "Alternative logging configuration.", CMDLINE_OPT_NORMAL|CMDLINE_OPT_PARAM);
+	CMDLINEARG_DEF2(script-check, scriptcheck, "Doesn't run the server, only tests the scripts passed through --load-script.", CMDLINE_OPT_SILENT);
+	CMDLINEARG_DEF2(load-script, loadscript, "Loads an additional script (can be repeated).", CMDLINE_OPT_NORMAL|CMDLINE_OPT_PARAM);
+	CMDLINEARG_DEF2(generate-translations, generatetranslations, "Creates './generated_translations.pot' file with all translateable strings from scripts, server terminates afterwards.", CMDLINE_OPT_NORMAL);
+}
+
 int do_init(int argc, char *argv[])
 {
 	bool minimal = false;
-	bool scriptcheck = false;
-	int i, load_extras_count = 0;
-	char **load_extras = NULL;
+	int i;
 
 #ifdef GCOLLECT
 	GC_enable_incremental();
@@ -5700,98 +5871,23 @@ int do_init(int argc, char *argv[])
 	
 	map_load_defaults();
 
+	map->INTER_CONF_NAME         = aStrdup("conf/inter-server.conf");
+	map->LOG_CONF_NAME           = aStrdup("conf/logs.conf");
+	map->MAP_CONF_NAME           = aStrdup("conf/map-server.conf");
+	map->BATTLE_CONF_FILENAME    = aStrdup("conf/battle.conf");
+	map->ATCOMMAND_CONF_FILENAME = aStrdup("conf/atcommand.conf");
+	map->SCRIPT_CONF_NAME        = aStrdup("conf/script.conf");
+	map->MSG_CONF_NAME           = aStrdup("conf/messages.conf");
+	map->GRF_PATH_FILENAME       = aStrdup("conf/grf-files.txt");
+
 	HPM_map_do_init();
 	HPM->symbol_defaults_sub = map_hp_symbols;
-	for( i = 1; i < argc; i++ ) {
-		const char* arg = argv[i];
-		if( strcmp(arg, "--load-plugin") == 0 ) {
-			if( map->arg_next_value(arg, i, argc, true) ) {
-				RECREATE(load_extras, char *, ++load_extras_count);
-				load_extras[load_extras_count-1] = argv[++i];
-			}
-		}
-	}
-	HPM->config_read((const char * const *)load_extras, load_extras_count);
-	if (load_extras) {
-		aFree(load_extras);
-		load_extras = NULL;
-		load_extras_count = 0;
-	}
+	cmdline->exec(argc, argv, CMDLINE_OPT_PREINIT);
+	HPM->config_read();
 	
 	HPM->event(HPET_PRE_INIT);
 	
-	for( i = 1; i < argc ; i++ ) {
-		const char* arg = argv[i];
-
-		if( arg[0] != '-' && ( arg[0] != '/' || arg[1] == '-' ) ) {// -, -- and /
-			ShowError("Unknown option '%s'.\n", argv[i]);
-			exit(EXIT_FAILURE);
-		} else if ( HPM->parse_arg(arg,&i,argv,map->arg_next_value(arg, i, argc, false)) ) {
-			continue; /* HPM Triggered */
-		} else if( (++arg)[0] == '-' ) {// long option
-			arg++;
-
-			if( strcmp(arg, "help") == 0 ) {
-				map->helpscreen(true);
-			} else if( strcmp(arg, "version") == 0 ) {
-				map->versionscreen(true);
-			} else if( strcmp(arg, "map-config") == 0 ) {
-				if( map->arg_next_value(arg, i, argc, true) )
-					map->MAP_CONF_NAME = argv[++i];
-			} else if( strcmp(arg, "battle-config") == 0 ) {
-				if( map->arg_next_value(arg, i, argc, true) )
-					map->BATTLE_CONF_FILENAME = argv[++i];
-			} else if( strcmp(arg, "atcommand-config") == 0 ) {
-				if( map->arg_next_value(arg, i, argc, true) )
-					map->ATCOMMAND_CONF_FILENAME = argv[++i];
-			} else if( strcmp(arg, "script-config") == 0 ) {
-				if( map->arg_next_value(arg, i, argc, true) )
-					map->SCRIPT_CONF_NAME = argv[++i];
-			} else if( strcmp(arg, "msg-config") == 0 ) {
-				if( map->arg_next_value(arg, i, argc, true) )
-					map->MSG_CONF_NAME = argv[++i];
-			} else if( strcmp(arg, "grf-path-file") == 0 ) {
-				if( map->arg_next_value(arg, i, argc, true) )
-					map->GRF_PATH_FILENAME = argv[++i];
-			} else if( strcmp(arg, "inter-config") == 0 ) {
-				if( map->arg_next_value(arg, i, argc, true) )
-					map->INTER_CONF_NAME = argv[++i];
-			} else if( strcmp(arg, "log-config") == 0 ) {
-				if( map->arg_next_value(arg, i, argc, true) )
-					map->LOG_CONF_NAME = argv[++i];
-			} else if( strcmp(arg, "run-once") == 0 ) { // close the map-server as soon as its done.. for testing [Celest]
-				runflag = CORE_ST_STOP;
-			} else if( strcmp(arg, "script-check") == 0 ) {
-				map->minimal = true;
-				runflag = CORE_ST_STOP;
-				scriptcheck = true;
-			} else if( strcmp(arg, "load-plugin") == 0 ) {
-				if( map->arg_next_value(arg, i, argc, true) )
-					i++;
-			} else if( strcmp(arg, "load-script") == 0 ) {
-				if( map->arg_next_value(arg, i, argc, true) ) {
-					RECREATE(load_extras, char *, ++load_extras_count);
-					load_extras[load_extras_count-1] = argv[++i];
-				}
-			} else {
-				ShowError("Unknown option '%s'.\n", argv[i]);
-				exit(EXIT_FAILURE);
-			}
-		} else {
-			switch( arg[0] ) {// short option
-				case '?':
-				case 'h':
-					map->helpscreen(true);
-					break;
-				case 'v':
-					map->versionscreen(true);
-					break;
-				default:
-					ShowError("Unknown option '%s'.\n", argv[i]);
-					exit(EXIT_FAILURE);
-			}
-		}
-	}
+	cmdline->exec(argc, argv, CMDLINE_OPT_NORMAL);
 	minimal = map->minimal;/* temp (perhaps make minimal a mask with options of what to load? e.g. plugin 1 does minimal |= mob_db; */
 	if (!minimal) {
 		map->config_read(map->MAP_CONF_NAME);
@@ -5800,7 +5896,7 @@ int do_init(int argc, char *argv[])
 		map->config_read_sub(map->MAP_CONF_NAME);
 
 		// loads npcs
-		map->reloadnpc(false, (const char * const *)load_extras, load_extras_count);
+		map->reloadnpc(false);
 
 		chrif->checkdefaultlogin();
 
@@ -5884,6 +5980,7 @@ int do_init(int argc, char *argv[])
 	atcommand->init(minimal);
 	battle->init(minimal);
 	instance->init(minimal);
+	channel->init(minimal);
 	chrif->init(minimal);
 	clif->init(minimal);
 	ircbot->init(minimal);
@@ -5909,20 +6006,15 @@ int do_init(int argc, char *argv[])
 	duel->init(minimal);
 	vending->init(minimal);
 
-	if (scriptcheck) {
-		bool failed = load_extras_count > 0 ? false : true;
-		for (i = 0; i < load_extras_count; i++) {
-			if (npc->parsesrcfile(load_extras[i], false) != EXIT_SUCCESS)
+	if (map->scriptcheck) {
+		bool failed = map->extra_scripts_count > 0 ? false : true;
+		for (i = 0; i < map->extra_scripts_count; i++) {
+			if (npc->parsesrcfile(map->extra_scripts[i], false) != EXIT_SUCCESS)
 				failed = true;
 		}
 		if (failed)
 			exit(EXIT_FAILURE);
 		exit(EXIT_SUCCESS);
-	}
-	if (load_extras) {
-		aFree(load_extras);
-		load_extras = NULL;
-		//load_extras_count = 0; // Dead store. Uncomment if needed again.
 	}
 
 	if( minimal ) {
@@ -5966,8 +6058,12 @@ void map_defaults(void) {
 
 	/* */
 	map->minimal = false;
+	map->scriptcheck = false;
 	map->count = 0;
 	map->retval = EXIT_SUCCESS;
+
+	map->extra_scripts = NULL;
+	map->extra_scripts_count = 0;
 	
 	sprintf(map->db_path ,"db");
 	sprintf(map->help_txt ,"conf/help.txt");
@@ -5990,7 +6086,6 @@ void map_defaults(void) {
 	
 	sprintf(map->item_db_db, "item_db");
 	sprintf(map->item_db2_db, "item_db2");
-	sprintf(map->item_db_re_db, "item_db_re");
 	sprintf(map->mob_db_db, "mob_db");
 	sprintf(map->mob_db2_db, "mob_db2");
 	sprintf(map->mob_skill_db_db, "mob_skill_db");
@@ -6013,6 +6108,7 @@ void map_defaults(void) {
 	sprintf(map->server_pw,"ragnarok");
 	sprintf(map->server_db,"ragnarok");
 	map->mysql_handle = NULL;
+	map->default_lang_str[0] = '\0';
 
 	map->cpsd_active = false;
 	
@@ -6219,9 +6315,6 @@ void map_defaults(void) {
 	map->nick_db_final = nick_db_final;
 	map->cleanup_db_sub = cleanup_db_sub;
 	map->abort_sub = map_abort_sub;
-	map->helpscreen = map_helpscreen;
-	map->versionscreen = map_versionscreen;
-	map->arg_next_value = map_arg_next_value;
 
 	map->update_cell_bl = map_update_cell_bl;
 	
@@ -6231,6 +6324,7 @@ void map_defaults(void) {
 	map->remove_questinfo = map_remove_questinfo;
 	
 	map->merge_zone = map_merge_zone;
+	map->zone_clear_single = map_zone_clear_single;
 		
 	/**
 	 * mapit interface

@@ -98,20 +98,20 @@ TBL_PC* party_sd_check(int party_id, int account_id, int char_id) {
 int party_db_final(DBKey key, DBData *data, va_list ap) {
 	struct party_data *p;
 	
-	if( ( p = DB->data2ptr(data) ) ) {
-		int j;
-		
-		if( p->instance )
+	if ((p = DB->data2ptr(data))) {
+		if (p->instance)
 			aFree(p->instance);
-		
-		for( j = 0; j < p->hdatac; j++ ) {
-			if( p->hdata[j]->flag.free ) {
-				aFree(p->hdata[j]->data);
+
+		if (p->hdata) {
+			int i;
+			for (i = 0; i < p->hdatac; i++) {
+				if (p->hdata[i]->flag.free) {
+					aFree(p->hdata[i]->data);
+				}
+				aFree(p->hdata[i]);
 			}
-			aFree(p->hdata[j]);
-		}
-		if( p->hdata )
 			aFree(p->hdata);
+		}
 	}
 	
 	return 0;
@@ -243,31 +243,32 @@ int party_recv_info(struct party* sp, int char_id)
 	int removed_count = 0;
 	int added[MAX_PARTY];// member_id in new data
 	int added_count = 0;
-	int i,j;
+	int j;
 	int member_id;
 
 	nullpo_ret(sp);
 
 	p = (struct party_data*)idb_get(party->db, sp->party_id);
 	if( p != NULL ) {// diff members
-		for( member_id = 0; member_id < MAX_PARTY; ++member_id ) {
+		int i;
+		for (member_id = 0; member_id < MAX_PARTY; ++member_id) {
 			member = &p->party.member[member_id];
-			if( member->char_id == 0 )
+			if (member->char_id == 0)
 				continue;// empty
 			ARR_FIND(0, MAX_PARTY, i,
 				sp->member[i].account_id == member->account_id &&
 				sp->member[i].char_id == member->char_id);
-			if( i == MAX_PARTY )
+			if (i == MAX_PARTY)
 				removed[removed_count++] = member_id;
 		}
-		for( member_id = 0; member_id < MAX_PARTY; ++member_id ) {
+		for (member_id = 0; member_id < MAX_PARTY; ++member_id) {
 			member = &sp->member[member_id];
-			if( member->char_id == 0 )
+			if (member->char_id == 0)
 				continue;// empty
 			ARR_FIND(0, MAX_PARTY, i,
 				p->party.member[i].account_id == member->account_id &&
 				p->party.member[i].char_id == member->char_id);
-			if( i == MAX_PARTY )
+			if (i == MAX_PARTY)
 				added[added_count++] = member_id;
 		}
 	} else {
@@ -337,7 +338,7 @@ int party_invite(struct map_session_data *sd,struct map_session_data *tsd)
 	ARR_FIND(0, MAX_PARTY, i, p->data[i].sd == sd);
 
 	if( i == MAX_PARTY || !p->party.member[i].leader ) {
-		clif->message(sd->fd, msg_txt(282));
+		clif->message(sd->fd, msg_sd(sd,282));
 		return 0;
 	}
 
@@ -351,7 +352,7 @@ int party_invite(struct map_session_data *sd,struct map_session_data *tsd)
 
 	// confirm whether the account has the ability to invite before checking the player
 	if( !pc_has_permission(sd, PC_PERM_PARTY) || (tsd && !pc_has_permission(tsd, PC_PERM_PARTY)) ) {
-		clif->message(sd->fd, msg_txt(81)); // "Your GM level doesn't authorize you to preform this action on the specified player."
+		clif->message(sd->fd, msg_sd(sd,81)); // "Your GM level doesn't authorize you to preform this action on the specified player."
 		return 0;
 	}
 
@@ -609,15 +610,16 @@ int party_broken(int party_id)
 	if( p->instance )
 		aFree(p->instance);
 
-	for( j = 0; j < p->hdatac; j++ ) {
-		if( p->hdata[j]->flag.free ) {
-			aFree(p->hdata[j]->data);
-		}
-		aFree(p->hdata[j]);
-	}
 	if( p->hdata )
+	{
+		for( j = 0; j < p->hdatac; j++ ) {
+			if( p->hdata[j]->flag.free ) {
+				aFree(p->hdata[j]->data);
+			}
+			aFree(p->hdata[j]);
+		}
 		aFree(p->hdata);
-	
+	}
 	idb_remove(party->db,party_id);
 	return 0;
 }
@@ -658,12 +660,12 @@ bool party_changeleader(struct map_session_data *sd, struct map_session_data *ts
 		return false;
 
 	if (!tsd || tsd->status.party_id != sd->status.party_id) {
-		clif->message(sd->fd, msg_txt(283));
+		clif->message(sd->fd, msg_sd(sd,283));
 		return false;
 	}
 
 	if( map->list[sd->bl.m].flag.partylock ) {
-		clif->message(sd->fd, msg_txt(287));
+		clif->message(sd->fd, msg_sd(sd,287));
 		return false;
 	}
 
@@ -676,7 +678,7 @@ bool party_changeleader(struct map_session_data *sd, struct map_session_data *ts
 
 	if (!p->party.member[mi].leader) {
 		//Need to be a party leader.
-		clif->message(sd->fd, msg_txt(282));
+		clif->message(sd->fd, msg_sd(sd,282));
 		return false;
 	}
 

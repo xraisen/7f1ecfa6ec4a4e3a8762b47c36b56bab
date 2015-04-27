@@ -347,6 +347,8 @@ bool homunculus_levelup(struct homun_data *hd) {
 	hom->int_+= growth_int;
 	hom->luk += growth_luk;
 
+	APPLY_HOMUN_LEVEL_STATWEIGHT();
+
 	if ( battle_config.homunculus_show_growth ) {
 		char output[256] ;
 		sprintf(output,
@@ -687,7 +689,7 @@ bool homunculus_change_name_ack(struct map_session_data *sd, char* name, int fla
 	normalize_name(name," ");//bugreport:3032
 
 	if ( !flag || !strlen(name) ) {
-		clif->message(sd->fd, msg_txt(280)); // You cannot use this name
+		clif->message(sd->fd, msg_sd(sd,280)); // You cannot use this name
 		return false;
 	}
 	safestrncpy(hd->homunculus.name,name,NAME_LENGTH);
@@ -1209,7 +1211,6 @@ void homunculus_skill_db_read(void) {
 }
 
 void homunculus_exp_db_read(void) {
-	FILE *fp;
 	char line[1024];
 	int i, j=0;
 	char *filename[]={
@@ -1218,6 +1219,7 @@ void homunculus_exp_db_read(void) {
 
 	memset(homun->exptable,0,sizeof(homun->exptable));
 	for(i = 0; i < 2; i++) {
+		FILE *fp;
 		sprintf(line, "%s/%s", map->db_path, filename[i]);
 		if( (fp=fopen(line,"r")) == NULL) {
 			if(i != 0)

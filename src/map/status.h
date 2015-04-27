@@ -6,7 +6,7 @@
 #define MAP_STATUS_H
 
 #include "../config/core.h" // defType, RENEWAL, RENEWAL_ASPD
-
+#include "../common/conf.h"
 #include "../common/cbasetypes.h"
 #include "../common/mmo.h" // NEW_CARTS
 
@@ -1868,6 +1868,7 @@ struct sc_display_entry {
 struct status_change_entry {
 	int timer;
 	int val1,val2,val3,val4;
+	bool infinite_duration;
 };
 
 struct status_change {
@@ -1939,6 +1940,13 @@ struct status_change {
 #define status_get_size(bl)                  (status->get_status_data(bl)->size)
 #define status_get_mode(bl)                  (status->get_status_data(bl)->mode)
 
+#define status_get_homstr(bl)                   (st->str + ((TBL_HOM*)bl)->homunculus.str_value)
+#define status_get_homagi(bl)                   (st->agi + ((TBL_HOM*)bl)->homunculus.agi_value)
+#define status_get_homvit(bl)                   (st->vit + ((TBL_HOM*)bl)->homunculus.vit_value)
+#define status_get_homint(bl)                   (st->int_ + ((TBL_HOM*)bl)->homunculus.int_value)
+#define status_get_homdex(bl)                   (st->dex + ((TBL_HOM*)bl)->homunculus.dex_value)
+#define status_get_homluk(bl)                   (st->luk + ((TBL_HOM*)bl)->homunculus.luk_value)
+
 //Short version, receives rate in 1->100 range, and does not uses a flag setting.
 #define sc_start(src, bl, type, rate, val1, tick)                    (status->change_start((src),(bl),(type),100*(rate),(val1),0,0,0,(tick),SCFLAG_NONE))
 #define sc_start2(src, bl, type, rate, val1, val2, tick)             (status->change_start((src),(bl),(type),100*(rate),(val1),(val2),0,0,(tick),SCFLAG_NONE))
@@ -1974,10 +1982,8 @@ struct status_interface {
 	int current_equip_card_id;
 	/* */
 	int max_weight_base[CLASS_COUNT];
-	int hp_coefficient[CLASS_COUNT];
-	int hp_coefficient2[CLASS_COUNT];
-	int hp_sigma_val[CLASS_COUNT][MAX_LEVEL+1];
-	int sp_coefficient[CLASS_COUNT];
+	int HP_table[CLASS_COUNT][MAX_LEVEL + 1];
+	int SP_table[CLASS_COUNT][MAX_LEVEL + 1];
 	int aspd_base[CLASS_COUNT][MAX_WEAPON_TYPE+1]; // +1 for RENEWAL_ASPD
 	sc_type Skill2SCTable[MAX_SKILL];  // skill  -> status
 	int IconChangeTable[SC_MAX];          // status -> "icon" (icon is a bit of a misnomer, since there exist values with no icon associated)
@@ -2062,7 +2068,7 @@ struct status_interface {
 	defType (*calc_mdef) (struct block_list *bl, struct status_change *sc, int mdef, bool viewable);
 	short (*calc_mdef2) (struct block_list *bl, struct status_change *sc, int mdef2, bool viewable);
 	unsigned short (*calc_batk)(struct block_list *bl, struct status_change *sc, int batk, bool viewable);
-	unsigned short (*base_matk) (const struct status_data *st, int level);
+	unsigned short(*base_matk) (struct block_list *bl, const struct status_data *st, int level);
 	int (*get_weapon_atk) (struct block_list *src, struct weapon_atk *watk, int flag);
 	int (*get_total_mdef) (struct block_list *src);
 	int (*get_total_def) (struct block_list *src);
@@ -2074,9 +2080,8 @@ struct status_interface {
 	void (*initDummyData) (void);
 	int (*base_amotion_pc) (struct map_session_data *sd, struct status_data *st);
 	unsigned short (*base_atk) (const struct block_list *bl, const struct status_data *st);
-	void (*calc_sigma) (void);
-	unsigned int (*base_pc_maxhp) (struct map_session_data *sd, struct status_data *st);
-	unsigned int (*base_pc_maxsp) (struct map_session_data *sd, struct status_data *st);
+	unsigned int (*get_base_maxhp) (struct map_session_data *sd, struct status_data *st);
+	unsigned int (*get_base_maxsp) (struct map_session_data *sd, struct status_data *st);
 	int (*calc_npc_) (struct npc_data *nd, enum e_status_calc_opt opt);
 	unsigned short (*calc_str) (struct block_list *bl, struct status_change *sc, int str);
 	unsigned short (*calc_agi) (struct block_list *bl, struct status_change *sc, int agi);
@@ -2106,15 +2111,18 @@ struct status_interface {
 	void (*display_remove) (struct map_session_data *sd, enum sc_type type);
 	int (*natural_heal) (struct block_list *bl, va_list args);
 	int (*natural_heal_timer) (int tid, int64 tick, int id, intptr_t data);
-	bool (*readdb_job1) (char *fields[], int columns, int current);
 	bool (*readdb_job2) (char *fields[], int columns, int current);
 	bool (*readdb_sizefix) (char *fields[], int columns, int current);
 	bool (*readdb_refine) (char *fields[], int columns, int current);
 	bool (*readdb_scconfig) (char *fields[], int columns, int current);
+	void (*read_job_db) (void);
+	void (*read_job_db_sub) (int idx, const char *name, config_setting_t *jdb);
 };
 
 struct status_interface *status;
 
+#ifdef HERCULES_CORE
 void status_defaults(void);
+#endif // HERCULES_CORE
 
 #endif /* MAP_STATUS_H */

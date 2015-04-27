@@ -80,6 +80,10 @@ enum HPluginDataTypes {
 	HPDT_INSTANCE,
 	HPDT_GUILD,
 	HPDT_PARTY,
+	HPDT_MOBDB,
+	HPDT_MOBDATA,
+	HPDT_ITEMDATA,
+	HPDT_BGDATA,
 };
 
 /* used in macros and conf storage */
@@ -101,7 +105,7 @@ enum HPluginConfType {
 #define hookStop() (HPMi->HookStop(__func__,HPMi->pid))
 #define hookStopped() (HPMi->HookStopped())
 
-#define addArg(name,param,func,help) (HPMi->addArg(HPMi->pid,(name),(param),(func),(help)))
+#define addArg(name, param,func,help) (HPMi->addArg(HPMi->pid,(name),(param),(cmdline_arg_ ## func),(help)))
 /* HPData handy redirects */
 /* session[] */
 #define addToSession(ptr,data,index,autofree) (HPMi->addToHPData(HPDT_SESSION,HPMi->pid,(ptr),(data),(index),(autofree)))
@@ -131,6 +135,22 @@ enum HPluginConfType {
 #define addToINSTD(ptr,data,index,autofree) (HPMi->addToHPData(HPDT_INSTANCE,HPMi->pid,(ptr),(data),(index),(autofree)))
 #define getFromINSTD(ptr,index) (HPMi->getFromHPData(HPDT_INSTANCE,HPMi->pid,(ptr),(index)))
 #define removeFromINSTD(ptr,index) (HPMi->removeFromHPData(HPDT_INSTANCE,HPMi->pid,(ptr),(index)))
+/* mob_db */
+#define addToMOBDB(ptr,data,index,autofree) (HPMi->addToHPData(HPDT_MOBDB,HPMi->pid,(ptr),(data),(index),(autofree)))
+#define getFromMOBDB(ptr,index) (HPMi->getFromHPData(HPDT_MOBDB,HPMi->pid,(ptr),(index)))
+#define removeFromMOBDB(ptr,index) (HPMi->removeFromHPData(HPDT_MOBDB,HPMi->pid,(ptr),(index)))
+/* mob_data */
+#define addToMOBDATA(ptr,data,index,autofree) (HPMi->addToHPData(HPDT_MOBDATA,HPMi->pid,(ptr),(data),(index),(autofree)))
+#define getFromMOBDATA(ptr,index) (HPMi->getFromHPData(HPDT_MOBDATA,HPMi->pid,(ptr),(index)))
+#define removeFromMOBDATA(ptr,index) (HPMi->removeFromHPData(HPDT_MOBDATA,HPMi->pid,(ptr),(index)))
+/* item_data */
+#define addToITEMDATA(ptr,data,index,autofree) (HPMi->addToHPData(HPDT_ITEMDATA,HPMi->pid,(ptr),(data),(index),(autofree)))
+#define getFromITEMDATA(ptr,index) (HPMi->getFromHPData(HPDT_ITEMDATA,HPMi->pid,(ptr),(index)))
+#define removeFromITEMDATA(ptr,index) (HPMi->removeFromHPData(HPDT_ITEMDATA,HPMi->pid,(ptr),(index)))
+/* battleground_data */
+#define addToBGDATA(ptr,data,index,autofree) (HPMi->addToHPData(HPDT_BGDATA,HPMi->pid,(ptr),(data),(index),(autofree)))
+#define getFromBGDATA(ptr,index) (HPMi->getFromHPData(HPDT_BGDATA,HPMi->pid,(ptr),(index)))
+#define removeFromBGDATA(ptr,index) (HPMi->removeFromHPData(HPDT_BGDATA,HPMi->pid,(ptr),(index)))
 
 /* HPMi->addCommand */
 #define addAtcommand(cname,funcname) \
@@ -199,7 +219,7 @@ HPExport struct HPMi_interface {
 	void (*HookStop) (const char *func, unsigned int pID);
 	bool (*HookStopped) (void);
 	/* program --arg/-a */
-	bool (*addArg) (unsigned int pluginID, char *name, bool has_param,void (*func) (char *param),void (*help) (void));
+	bool (*addArg) (unsigned int pluginID, char *name, bool has_param, CmdlineExecFunc func, const char *help);
 	/* battle-config recv param */
 	bool (*addConf) (unsigned int pluginID, enum HPluginConfType type, char *name, void (*func) (const char *val));
 	/* pc group permission */

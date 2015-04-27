@@ -48,7 +48,7 @@ const char* mapindex_getmapname_ext(const char* string, char* output) {
 
 	size_t len;
 
-	strcpy(buf,string);
+	safestrncpy(buf,string, sizeof(buf));
 	sscanf(string, "%*[^#]%*[#]%15s", buf);
 
 	len = safestrnlen(buf, MAP_NAME_LENGTH);
@@ -126,7 +126,7 @@ unsigned short mapindex_name2id(const char* name) {
 }
 
 const char* mapindex_id2name_sub(unsigned short id,const char *file, int line, const char *func) {
-	if (id > MAX_MAPINDEX || !mapindex_exists(id)) {
+	if (id >= MAX_MAPINDEX || !mapindex_exists(id)) {
 		ShowDebug("mapindex_id2name: Requested name for non-existant map index [%d] in cache. %s:%s:%d\n", id,file,func,line);
 		return mapindex->list[0].name; // dummy empty string so that the callee doesn't crash
 	}
@@ -154,6 +154,7 @@ int mapindex_init(void) {
 		switch (sscanf(line, "%12s\t%d", map_name, &index)) {
 			case 1: //Map with no ID given, auto-assign
 				index = last_index+1;
+				/* Fall through */
 			case 2: //Map with ID given
 				mapindex->addmap(index,map_name);
 				total++;
@@ -165,11 +166,18 @@ int mapindex_init(void) {
 	}
 	fclose(fp);
 
-	if( !strdb_iget(mapindex->db, MAP_DEFAULT) ) {
-		ShowError("mapindex_init: MAP_DEFAULT '%s' not found in cache! update mapindex.h MAP_DEFAULT var!!!\n",MAP_DEFAULT);
-	}
+	mapindex->check_default();
 
 	return total;
+}
+
+bool mapindex_check_default(void)
+{
+	if (!strdb_iget(mapindex->db, mapindex->default_map)) {
+		ShowError("mapindex_init: MAP_DEFAULT '%s' not found in cache! update mapindex.h MAP_DEFAULT var!!!\n", mapindex->default_map);
+		return false;
+	}
+	return true;
 }
 
 void mapindex_removemap(int index){
@@ -189,6 +197,9 @@ void mapindex_defaults(void) {
 	/* */
 	mapindex->db = NULL;
 	mapindex->num = 0;
+	mapindex->default_map = MAP_DEFAULT;
+	mapindex->default_x = MAP_DEFAULT_X;
+	mapindex->default_y = MAP_DEFAULT_Y;
 	memset (&mapindex->list, 0, sizeof (mapindex->list));
 
 	/* */
@@ -201,4 +212,5 @@ void mapindex_defaults(void) {
 	mapindex->getmapname_ext = mapindex_getmapname_ext;
 	mapindex->name2id = mapindex_name2id;
 	mapindex->id2name = mapindex_id2name_sub;
+	mapindex->check_default = mapindex_check_default;
 }

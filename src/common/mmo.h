@@ -103,7 +103,7 @@
 #define MAX_ZENY 1000000000
 
 //Official Limit: 2.1b ( the var that stores the money doesn't go much higher than this by default )
-#define MAX_BANK_ZENY 2100000000
+#define MAX_BANK_ZENY INT_MAX
 
 #define MAX_LEVEL 175
 #define MAX_FAME 1000000000
@@ -376,6 +376,14 @@ struct s_homunculus { //[orn]
 	int int_;
 	int dex;
 	int luk;
+
+	int str_value;
+	int agi_value;
+	int vit_value;
+	int int_value;
+	int dex_value;
+	int luk_value;
+
 	int8 spiritball; //for homun S [lighta]
 };
 
@@ -577,7 +585,7 @@ struct guild_skill {
 	int id,lv;
 };
 
-struct hChSysCh;
+struct channel_data;
 struct guild {
 	int guild_id;
 	short guild_lv, connect_member, max_member, average_lv;
@@ -600,7 +608,7 @@ struct guild {
 	short *instance;
 	unsigned short instances;
 
-	struct hChSysCh *channel;
+	struct channel_data *channel;
 
 	/* HPM Custom Struct */
 	struct HPluginData **hdata;

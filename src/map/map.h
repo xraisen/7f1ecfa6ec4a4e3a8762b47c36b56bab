@@ -5,6 +5,8 @@
 #ifndef MAP_MAP_H
 #define MAP_MAP_H
 
+#include "../config/core.h"
+
 #include <stdarg.h>
 
 #include "atcommand.h"
@@ -17,7 +19,7 @@
 
 struct mob_data;
 struct npc_data;
-struct hChSysCh;
+struct channel_data;
 
 enum E_MAPSERVER_ST {
 	MAPSERVER_ST_RUNNING = CORE_ST_LAST,
@@ -281,7 +283,7 @@ enum {
 	RC2_MAX
 };
 
-enum {
+enum elements {
 	ELE_NEUTRAL=0,
 	ELE_WATER,
 	ELE_EARTH,
@@ -293,6 +295,19 @@ enum {
 	ELE_GHOST,
 	ELE_UNDEAD,
 	ELE_MAX
+};
+
+/**
+ * Types of spirit charms.
+ *
+ * Note: Code assumes that this matches the first entries in enum elements.
+ */
+enum spirit_charm_types {
+	CHARM_TYPE_NONE = 0,
+	CHARM_TYPE_WATER,
+	CHARM_TYPE_LAND,
+	CHARM_TYPE_FIRE,
+	CHARM_TYPE_WIND
 };
 
 enum auto_trigger_flag {
@@ -410,6 +425,7 @@ enum status_point_types {
 	SP_SKILL_COOLDOWN,SP_SKILL_FIXEDCAST, SP_SKILL_VARIABLECAST, SP_FIXCASTRATE, SP_VARCASTRATE, //2050-2054
 	SP_SKILL_USE_SP,SP_MAGIC_ATK_ELE, SP_ADD_FIXEDCAST, SP_ADD_VARIABLECAST,  //2055-2058
 	SP_SET_DEF_RACE,SP_SET_MDEF_RACE, //2059-2060
+	SP_RACE_TOLERANCE, //2061
 
 	/* must be the last, plugins add bonuses from this value onwards */
 	SP_LAST_KNOWN,
@@ -545,6 +561,8 @@ struct map_zone_data {
 	int disabled_skills_count;
 	int *disabled_items;
 	int disabled_items_count;
+	int *cant_disable_items; /** when a zone wants to ensure such a item is never disabled (i.e. gvg zone enables a item that is restricted everywhere else) **/
+	int cant_disable_items_count;
 	char **mapflags;
 	int mapflags_count;
 	struct map_zone_disabled_command_entry **disabled_commands;
@@ -679,7 +697,7 @@ struct map_data {
 	struct map_zone_data *prev_zone;
 
 	/* Hercules Local Chat */
-	struct hChSysCh *channel;
+	struct channel_data *channel;
 
 	/* invincible_time_inc mapflag */
 	unsigned int invincible_time_inc;
@@ -800,7 +818,13 @@ struct map_cache_map_info {
 struct map_interface {
 
 	/* vars */
-	bool minimal;
+	bool minimal;     ///< Starts the server in minimal initialization mode.
+	bool scriptcheck; ///< Starts the server in script-check mode.
+
+	/** Additional scripts requested through the command-line */
+	char **extra_scripts;
+	int extra_scripts_count;
+
 	int retval;
 	int count;
 
@@ -834,7 +858,6 @@ struct map_interface {
 
 	char item_db_db[32];
 	char item_db2_db[32];
-	char item_db_re_db[32];
 	char mob_db_db[32];
 	char mob_db2_db[32];
 	char mob_skill_db_db[32];
@@ -845,6 +868,8 @@ struct map_interface {
 	char npc_market_data_db[32];
 
 	char default_codepage[32];
+	char default_lang_str[64];
+	uint8 default_lang_id;
 
 	int server_port;
 	char server_ip[32];
@@ -991,7 +1016,7 @@ struct map_interface {
 	struct mob_data * (*getmob_boss) (int16 m);
 	struct mob_data * (*id2boss) (int id);
 	// reload config file looking only for npcs
-	void (*reloadnpc) (bool clear, const char * const *extra_scripts, int extra_scripts_count);
+	void (*reloadnpc) (bool clear);
 
 	int (*check_dir) (int s_dir,int t_dir);
 	uint8 (*calc_dir) (struct block_list *src,int16 x,int16 y);
@@ -1054,18 +1079,18 @@ struct map_interface {
 	int (*nick_db_final) (DBKey key, DBData *data, va_list args);
 	int (*cleanup_db_sub) (DBKey key, DBData *data, va_list va);
 	int (*abort_sub) (struct map_session_data *sd, va_list ap);
-	void (*helpscreen) (bool do_exit);
-	void (*versionscreen) (bool do_exit);
-	bool (*arg_next_value) (const char *option, int i, int argc, bool must);
 	void (*update_cell_bl) (struct block_list *bl, bool increase);
 	int (*get_new_bonus_id) (void);
 	void (*add_questinfo) (int m, struct questinfo *qi);
 	bool (*remove_questinfo) (int m, struct npc_data *nd);
 	struct map_zone_data *(*merge_zone) (struct map_zone_data *main, struct map_zone_data *other);
+	void (*zone_clear_single) (struct map_zone_data *zone);
 };
 
 struct map_interface *map;
 
+#ifdef HERCULES_CORE
 void map_defaults(void);
+#endif // HERCULES_CORE
 
 #endif /* MAP_MAP_H */

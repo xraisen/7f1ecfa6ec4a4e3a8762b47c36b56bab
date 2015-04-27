@@ -62,7 +62,7 @@ struct chrif_interface chrif_s;
 //2b0a: Incoming/Outgoing, socket_datasync()
 //2b0b: Outgoing, update charserv skillid2idx
 //2b0c: Outgoing, chrif_changeemail -> 'change mail address ...'
-//2b0d: Incoming, chrif_changedsex -> 'Change sex of acc XY'
+//2b0d: Incoming, chrif_changedsex -> 'Change sex of acc XY' (or char)
 //2b0e: Outgoing, chrif_char_ask_name -> 'Do some operations (change sex, ban / unban etc)'
 //2b0f: Incoming, chrif_char_ask_name_answer -> 'answer of the 2b0e'
 //2b10: Outgoing, chrif_updatefamelist -> 'Update the fame ranking lists and send them'
@@ -655,9 +655,9 @@ void chrif_authfail(int fd) {/* HELLO WORLD. ip in RFIFOL 15 is not being used (
  */
 int auth_db_cleanup_sub(DBKey key, DBData *data, va_list ap) {
 	struct auth_node *node = DB->data2ptr(data);
-	const char* states[] = { "Login", "Logout", "Map change" };
 
 	if(DIFF_TICK(timer->gettick(),node->node_created)>60000) {
+		const char* states[] = { "Login", "Logout", "Map change" };
 		switch (node->state) {
 			case ST_LOGOUT:
 				//Re-save attempt (->sd should never be null here).
@@ -744,10 +744,18 @@ bool chrif_changeemail(int id, const char *actual_email, const char *new_email) 
 }
 
 /*==========================================
- * S 2b0e <accid>.l <name>.24B <type>.w { <year>.w <month>.w <day>.w <hour>.w <minute>.w <second>.w }
+ * S 2b0e <accid>.l <name>.24B <type>.w { <additional fields>.12B }
+ * { <year>.w <month>.w <day>.w <hour>.w <minute>.w <second>.w }
  * Send an account modification request to the login server (via char server).
- * type of operation:
- *   1: block, 2: ban, 3: unblock, 4: unban, 5: changesex (use next function for 5), 6: charban
+ * type of operation {additional fields}:
+ *   1: block         { n/a }
+ *   2: ban           { <year>.w <month>.w <day>.w <hour>.w <minute>.w <second>.w }
+ *   3: unblock       { n/a }
+ *   4: unban         { n/a }
+ *   5: changesex     { n/a } -- use chrif_changesex
+ *   6: charban       { <year>.w <month>.w <day>.w <hour>.w <minute>.w <second>.w }
+ *   7: charunban     { n/a }
+ *   8: changecharsex { <sex>.b } -- use chrif_changesex
  *------------------------------------------*/
 bool chrif_char_ask_name(int acc, const char* character_name, unsigned short operation_type, int year, int month, int day, int hour, int minute, int second)
 {
@@ -772,17 +780,27 @@ bool chrif_char_ask_name(int acc, const char* character_name, unsigned short ope
 	return true;
 }
 
-bool chrif_changesex(struct map_session_data *sd) {
+/**
+ * Requests a sex change (either per character or per account).
+ * 
+ * @param sd             The character's data.
+ * @param change_account Whether to change the per-account sex.
+ * @retval true.
+ */
+bool chrif_changesex(struct map_session_data *sd, bool change_account)
+{
 	chrif_check(false);
 
 	WFIFOHEAD(chrif->fd,44);
 	WFIFOW(chrif->fd,0) = 0x2b0e;
 	WFIFOL(chrif->fd,2) = sd->status.account_id;
 	safestrncpy((char*)WFIFOP(chrif->fd,6), sd->status.name, NAME_LENGTH);
-	WFIFOW(chrif->fd,30) = 5;
+	WFIFOW(chrif->fd,30) = change_account ? 5 : 8;
+	if (!change_account)
+		WFIFOB(chrif->fd,32) = sd->status.sex == SEX_MALE ? SEX_FEMALE : SEX_MALE;
 	WFIFOSET(chrif->fd,44);
 
-	clif->message(sd->fd, msg_txt(408)); //"Disconnecting to perform change-sex request..."
+	clif->message(sd->fd, msg_sd(sd,408)); //"Disconnecting to perform change-sex request..."
 
 	if (sd->fd)
 		clif->authfail_fd(sd->fd, 15);
@@ -795,7 +813,7 @@ bool chrif_changesex(struct map_session_data *sd) {
  * R 2b0f <accid>.l <name>.24B <type>.w <answer>.w
  * Processing a reply to chrif->char_ask_name() (request to modify an account).
  * type of operation:
- *   1: block, 2: ban, 3: unblock, 4: unban, 5: changesex, 6: charban, 7: charunban
+ *   1: block, 2: ban, 3: unblock, 4: unban, 5: changesex, 6: charban, 7: charunban, 8: changecharsex
  * type of answer:
  *   0: login-server request done
  *   1: player not found
@@ -815,20 +833,20 @@ bool chrif_char_ask_name_answer(int acc, const char* player_name, uint16 type, u
 		return false;
 	}
 
-	/* re-use previous msg_txt */
+	/* re-use previous msg_number */
 	if( type == 6 ) type = 2;
 	if( type == 7 ) type = 4;
 
 	if( type > 0 && type <= 5 )
-		snprintf(action,25,"%s",msg_txt(427+type)); //block|ban|unblock|unban|change the sex of
+		snprintf(action,25,"%s",msg_sd(sd,427+type)); //block|ban|unblock|unban|change the sex of
 	else
 		snprintf(action,25,"???");
 
 	switch( answer ) {
-		case 0 : sprintf(output, msg_txt(charsrv?434:424), action, NAME_LENGTH, player_name); break;
-		case 1 : sprintf(output, msg_txt(425), NAME_LENGTH, player_name); break;
-		case 2 : sprintf(output, msg_txt(426), action, NAME_LENGTH, player_name); break;
-		case 3 : sprintf(output, msg_txt(427), action, NAME_LENGTH, player_name); break;
+		case 0 : sprintf(output, msg_sd(sd,charsrv?434:424), action, NAME_LENGTH, player_name); break;
+		case 1 : sprintf(output, msg_sd(sd,425), NAME_LENGTH, player_name); break;
+		case 2 : sprintf(output, msg_sd(sd,426), action, NAME_LENGTH, player_name); break;
+		case 3 : sprintf(output, msg_sd(sd,427), action, NAME_LENGTH, player_name); break;
 		default: output[0] = '\0'; break;
 	}
 
@@ -847,8 +865,11 @@ void chrif_changedsex(int fd) {
 		ShowNotice("chrif_changedsex %d.\n", acc);
 
 	// Path to activate this response:
-	// Map(start) (0x2b0e) -> Char(0x2727) -> Login
+	// Map(start) (0x2b0e type 5) -> Char(0x2727) -> Login
 	// Login(0x2723) [ALL] -> Char (0x2b0d)[ALL] -> Map (HERE)
+	// OR
+	// Map(start) (0x2b03 type 8) -> Char
+	// Char(0x2b0d)[ALL] -> Map (HERE)
 	// Char will usually be "logged in" despite being forced to log-out in the beginning
 	// of this process, but there's no need to perform map-server specific response
 	// as everything should been changed through char-server [Panikon]
@@ -943,23 +964,23 @@ void chrif_idbanned(int fd) {
 	if (RFIFOB(fd,6) == 0) { // 0: change of status
 		int ret_status = RFIFOL(fd,7); // status or final date of a banishment
 		if(0<ret_status && ret_status<=9)
-			clif->message(sd->fd, msg_txt(411+ret_status)); // Message IDs (for search convenience): 412, 413, 414, 415, 416, 417, 418, 419, 420
+			clif->message(sd->fd, msg_sd(sd,411+ret_status)); // Message IDs (for search convenience): 412, 413, 414, 415, 416, 417, 418, 419, 420
 		else if(ret_status==100)
-			clif->message(sd->fd, msg_txt(421));
+			clif->message(sd->fd, msg_sd(sd,421));
 		else
-			clif->message(sd->fd, msg_txt(420)); //"Your account has not more authorized."
+			clif->message(sd->fd, msg_sd(sd,420)); //"Your account has not more authorized."
 	} else if (RFIFOB(fd,6) == 1) { // 1: ban
 		time_t timestamp;
 		char tmpstr[2048];
 		timestamp = (time_t)RFIFOL(fd,7); // status or final date of a banishment
-		strcpy(tmpstr, msg_txt(423)); //"Your account has been banished until "
+		safestrncpy(tmpstr, msg_sd(sd,423), sizeof(tmpstr)); //"Your account has been banished until "
 		strftime(tmpstr + strlen(tmpstr), 24, "%d-%m-%Y %H:%M:%S", localtime(&timestamp));
 		clif->message(sd->fd, tmpstr);
 	} else if (RFIFOB(fd,6) == 2) { // 2: change of status for character
 		time_t timestamp;
 		char tmpstr[2048];
 		timestamp = (time_t)RFIFOL(fd,7); // status or final date of a banishment
-		strcpy(tmpstr, msg_txt(433)); //"This character has been banned until  "
+		safestrncpy(tmpstr, msg_sd(sd,433), sizeof(tmpstr)); //"This character has been banned until  "
 		strftime(tmpstr + strlen(tmpstr), 24, "%d-%m-%Y %H:%M:%S", localtime(&timestamp));
 		clif->message(sd->fd, tmpstr);
 	}
@@ -1148,7 +1169,6 @@ bool chrif_load_scdata(int fd) {
 
 #ifdef ENABLE_SC_SAVING
 	struct map_session_data *sd;
-	struct status_change_data *data;
 	int aid, cid, i, count;
 
 	aid = RFIFOL(fd,4); //Player Account ID
@@ -1169,7 +1189,7 @@ bool chrif_load_scdata(int fd) {
 	count = RFIFOW(fd,12); //sc_count
 
 	for (i = 0; i < count; i++) {
-		data = (struct status_change_data*)RFIFOP(fd,14 + i*sizeof(struct status_change_data));
+		struct status_change_data *data = (struct status_change_data*)RFIFOP(fd,14 + i*sizeof(struct status_change_data));
 		status->change_start(NULL, &sd->bl, (sc_type)data->type, 10000, data->val1, data->val2, data->val3, data->val4,
 		                     data->tick, SCFLAG_NOAVOID|SCFLAG_FIXEDTICK|SCFLAG_LOADED|SCFLAG_FIXEDRATE);
 	}

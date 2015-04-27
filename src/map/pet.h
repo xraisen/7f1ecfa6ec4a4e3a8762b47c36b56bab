@@ -149,13 +149,14 @@ struct pet_interface {
 	int (*lootitem_drop) (struct pet_data *pd, struct map_session_data *sd);
 	int (*skill_bonus_timer) (int tid, int64 tick, int id, intptr_t data);
 	int (*recovery_timer) (int tid, int64 tick, int id, intptr_t data);
-	int (*heal_timer) (int tid, int64 tick, int id, intptr_t data);
 	int (*skill_support_timer) (int tid, int64 tick, int id, intptr_t data);
 	int (*read_db) ();
 };
 
 struct pet_interface *pet;
 
+#ifdef HERCULES_CORE
 void pet_defaults(void);
+#endif // HERCULES_CORE
 
 #endif /* MAP_PET_H */
