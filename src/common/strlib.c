@@ -18,6 +18,10 @@
 
 #define J_MAX_MALLOC_SIZE 65535
 
+struct strlib_interface strlib_s;
+struct stringbuf_interface stringbuf_s;
+struct sv_interface sv_s;
+
 // escapes a string in-place (' -> \' , \ -> \\ , % -> _)
 char* jstrescape (char* pt) {
 	//copy from here
@@ -58,11 +62,12 @@ char* jstrescapecpy (char* pt, const char* spt)
 	//a escape character is found, the target's final length increases! [Skotlex]
 	int i =0, j=0;
 
-	if (!spt) {	//Return an empty string [Skotlex]
+	if (!spt) {
+		//Return an empty string [Skotlex]
 		pt[0] = '\0';
 		return &pt[0];
 	}
-	
+
 	while (spt[i] != '\0') {
 		switch (spt[i]) {
 			case '\'':
@@ -248,7 +253,8 @@ char* strtok_r_(char *s1, const char *s2, char **lasts) {
 // for NetBSD 5.x and possibly some Solaris versions.
 #if !(defined(WIN32) && defined(_MSC_VER) && _MSC_VER >= 1400) && !defined(HAVE_STRNLEN)
 /* Find the length of STRING, but scan at most MAXLEN characters.
-   If no '\0' terminator is found in that many characters, return MAXLEN.  */
+ * If no '\0' terminator is found in that many characters, return MAXLEN.
+ */
 size_t strnlen(const char* string, size_t maxlen) {
 	const char* end = (const char*)memchr(string, '\0', maxlen);
 	return end ? (size_t) (end - string) : maxlen;
@@ -940,7 +946,6 @@ bool sv_readdb(const char* directory, const char* filename, char delim, int minc
 	char** fields; // buffer for fields ([0] is reserved)
 	int columns, fields_length;
 	char path[1024], line[1024];
-	char* match;
 
 	snprintf(path, sizeof(path), "%s/%s", directory, filename);
 
@@ -956,9 +961,11 @@ bool sv_readdb(const char* directory, const char* filename, char delim, int minc
 
 	// process rows one by one
 	while( fgets(line, sizeof(line), fp) ) {
+		char *match;
 		lines++;
 
-		if( ( match = strstr(line, "//") ) != NULL ) {// strip comments
+		if ((match = strstr(line, "//") ) != NULL) {
+			// strip comments
 			match[0] = 0;
 		}
 
@@ -1033,13 +1040,11 @@ int StringBuf_Printf(StringBuf *self, const char *fmt, ...) {
 
 /// Appends the result of vprintf to the StringBuf
 int StringBuf_Vprintf(StringBuf* self, const char* fmt, va_list ap) {
-	int n, off;
-	size_t size;
-
 	for(;;) {
 		va_list apcopy;
+		int n, off;
 		/* Try to print in the allocated space. */
-		size = self->max_ - (self->ptr_ - self->buf_);
+		size_t size = self->max_ - (self->ptr_ - self->buf_);
 		va_copy(apcopy, ap);
 		n = vsnprintf(self->ptr_, size, fmt, apcopy);
 		va_end(apcopy);
@@ -1126,18 +1131,19 @@ void strlib_defaults(void) {
 	sv = &sv_s;
 	/* link~u! */
 	strlib->jstrescape = jstrescape;
+	strlib->jstrescapecpy = jstrescapecpy;
 	strlib->jmemescapecpy = jmemescapecpy;
 	strlib->remove_control_chars = remove_control_chars;
 	strlib->trim = trim;
 	strlib->normalize_name = normalize_name;
 	strlib->stristr = stristr;
-	
+
 #if !(defined(WIN32) && defined(_MSC_VER) && _MSC_VER >= 1400) && !defined(HAVE_STRNLEN)
 	strlib->strnlen = strnlen;
 #else
 	strlib->strnlen = NULL;
 #endif
-	
+
 #if defined(WIN32) && defined(_MSC_VER) && _MSC_VER <= 1200
 	strlib->strtoull = strtoull;
 #else
@@ -1150,7 +1156,7 @@ void strlib_defaults(void) {
 	strlib->safesnprintf = safesnprintf;
 	strlib->strline = strline;
 	strlib->bin2hex = bin2hex;
-	
+
 	StrBuf->Malloc = StringBuf_Malloc;
 	StrBuf->Init = StringBuf_Init;
 	StrBuf->Printf = StringBuf_Printf;
@@ -1162,7 +1168,7 @@ void strlib_defaults(void) {
 	StrBuf->Clear = StringBuf_Clear;
 	StrBuf->Destroy = StringBuf_Destroy;
 	StrBuf->Free = StringBuf_Free;
-	
+
 	sv->parse_next = sv_parse_next;
 	sv->parse = sv_parse;
 	sv->split = sv_split;

@@ -29,8 +29,12 @@
 #	include <errno.h>
 #	include <net/if.h>
 #	include <netdb.h>
+#if defined __linux__ || defined __linux
+#       include <linux/tcp.h>
+#else
 #	include <netinet/in.h>
 #	include <netinet/tcp.h>
+#endif
 #	include <sys/ioctl.h>
 #	include <sys/socket.h>
 #	include <sys/time.h>
@@ -274,7 +278,7 @@ const char* error_msg(void)
 }
 
 /*======================================
- *	CORE : Default processing functions
+ * CORE : Default processing functions
  *--------------------------------------*/
 int null_recv(int fd) { return 0; }
 int null_send(int fd) { return 0; }
@@ -289,7 +293,7 @@ void set_defaultparse(ParseFunc defaultparse)
 
 
 /*======================================
- *	CORE : Socket options
+ * CORE : Socket options
  *--------------------------------------*/
 void set_nonblocking(int fd, unsigned long yes)
 {
@@ -302,41 +306,55 @@ void set_nonblocking(int fd, unsigned long yes)
 void setsocketopts(int fd, struct hSockOpt *opt) {
 	int yes = 1; // reuse fix
 	struct linger lopt;
-		
+
 #if !defined(WIN32)
 	// set SO_REAUSEADDR to true, unix only. on windows this option causes
 	// the previous owner of the socket to give up, which is not desirable
 	// in most cases, neither compatible with unix.
-	sSetsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(char *)&yes,sizeof(yes));
+	if (sSetsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(char *)&yes,sizeof(yes)))
+		ShowWarning("setsocketopts: Unable to set SO_REUSEADDR mode for connection #%d!\n", fd);
 #ifdef SO_REUSEPORT
-	sSetsockopt(fd,SOL_SOCKET,SO_REUSEPORT,(char *)&yes,sizeof(yes));
-#endif
-#endif
+	if (sSetsockopt(fd,SOL_SOCKET,SO_REUSEPORT,(char *)&yes,sizeof(yes)))
+		ShowWarning("setsocketopts: Unable to set SO_REUSEPORT mode for connection #%d!\n", fd);
+#endif // SO_REUSEPORT
+#endif // WIN32
 
 	// Set the socket into no-delay mode; otherwise packets get delayed for up to 200ms, likely creating server-side lag.
 	// The RO protocol is mainly single-packet request/response, plus the FIFO model already does packet grouping anyway.
-	sSetsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char *)&yes, sizeof(yes));
+	if (sSetsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char *)&yes, sizeof(yes)))
+		ShowWarning("setsocketopts: Unable to set TCP_NODELAY mode for connection #%d!\n", fd);
 
 	if( opt && opt->setTimeo ) {
 		struct timeval timeout;
-		
+
 		timeout.tv_sec = 5;
 		timeout.tv_usec = 0;
-		
-		sSetsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,(char *)&timeout,sizeof(timeout));
-		sSetsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,(char *)&timeout,sizeof(timeout));
+
+		if (sSetsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,(char *)&timeout,sizeof(timeout)))
+			ShowWarning("setsocketopts: Unable to set SO_RCVTIMEO for connection #%d!\n", fd);
+		if (sSetsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,(char *)&timeout,sizeof(timeout)))
+			ShowWarning("setsocketopts: Unable to set SO_SNDTIMEO for connection #%d!\n", fd);
 	}
-	
+
 	// force the socket into no-wait, graceful-close mode (should be the default, but better make sure)
 	//(http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winsock/winsock/closesocket_2.asp)
 	lopt.l_onoff = 0; // SO_DONTLINGER
 	lopt.l_linger = 0; // Do not care
 	if( sSetsockopt(fd, SOL_SOCKET, SO_LINGER, (char*)&lopt, sizeof(lopt)) )
 		ShowWarning("setsocketopts: Unable to set SO_LINGER mode for connection #%d!\n", fd);
+
+#ifdef TCP_THIN_LINEAR_TIMEOUTS
+    if (sSetsockopt(fd, IPPROTO_TCP, TCP_THIN_LINEAR_TIMEOUTS, (char *)&yes, sizeof(yes)))
+	    ShowWarning("setsocketopts: Unable to set TCP_THIN_LINEAR_TIMEOUTS mode for connection #%d!\n", fd);
+#endif
+#ifdef TCP_THIN_DUPACK
+    if (sSetsockopt(fd, IPPROTO_TCP, TCP_THIN_DUPACK, (char *)&yes, sizeof(yes)))
+	    ShowWarning("setsocketopts: Unable to set TCP_THIN_DUPACK mode for connection #%d!\n", fd);
+#endif
 }
 
 /*======================================
- *	CORE : Socket Sub Function
+ * CORE : Socket Sub Function
  *--------------------------------------*/
 void set_eof(int fd)
 {
@@ -448,7 +466,7 @@ void flush_fifos(void)
 }
 
 /*======================================
- *	CORE : Connection functions
+ * CORE : Connection functions
  *--------------------------------------*/
 int connect_client(int listen_fd) {
 	int fd;
@@ -494,7 +512,7 @@ int connect_client(int listen_fd) {
 
 int make_listen_bind(uint32 ip, uint16 port)
 {
-	struct sockaddr_in server_address;
+	struct sockaddr_in server_address = { 0 };
 	int fd;
 	int result;
 
@@ -544,7 +562,7 @@ int make_listen_bind(uint32 ip, uint16 port)
 }
 
 int make_connection(uint32 ip, uint16 port, struct hSockOpt *opt) {
-	struct sockaddr_in remote_address;
+	struct sockaddr_in remote_address = { 0 };
 	int fd;
 	int result;
 
@@ -613,7 +631,6 @@ static int create_session(int fd, RecvFunc func_recv, SendFunc func_send, ParseF
 static void delete_session(int fd)
 {
 	if( sockt->session_isValid(fd) ) {
-		unsigned int i;
 #ifdef SHOW_SERVER_STATS
 		socket_data_qi -= session[fd]->rdata_size - session[fd]->rdata_pos;
 		socket_data_qo -= session[fd]->wdata_size;
@@ -622,14 +639,16 @@ static void delete_session(int fd)
 		aFree(session[fd]->wdata);
 		if( session[fd]->session_data )
 			aFree(session[fd]->session_data);
-		for(i = 0; i < session[fd]->hdatac; i++) {
-			if( session[fd]->hdata[i]->flag.free ) {
-				aFree(session[fd]->hdata[i]->data);
+		if (session[fd]->hdata) {
+			unsigned int i;
+			for(i = 0; i < session[fd]->hdatac; i++) {
+				if( session[fd]->hdata[i]->flag.free ) {
+					aFree(session[fd]->hdata[i]->data);
+				}
+				aFree(session[fd]->hdata[i]);
 			}
-			aFree(session[fd]->hdata[i]);
-		}
-		if( session[fd]->hdata )
 			aFree(session[fd]->hdata);
+		}
 		aFree(session[fd]);
 		session[fd] = NULL;
 	}
@@ -659,19 +678,19 @@ int realloc_writefifo(int fd, size_t addition)
 	if( !sockt->session_isValid(fd) ) // might not happen
 		return 0;
 
-	if( session[fd]->wdata_size + addition  > session[fd]->max_wdata )
-	{	// grow rule; grow in multiples of WFIFO_SIZE
+	if (session[fd]->wdata_size + addition  > session[fd]->max_wdata) {
+		// grow rule; grow in multiples of WFIFO_SIZE
 		newsize = WFIFO_SIZE;
 		while( session[fd]->wdata_size + addition > newsize ) newsize += WFIFO_SIZE;
-	}
-	else
-	if( session[fd]->max_wdata >= (size_t)2*(session[fd]->flag.server?FIFOSIZE_SERVERLINK:WFIFO_SIZE)
-		&& (session[fd]->wdata_size+addition)*4 < session[fd]->max_wdata )
-	{	// shrink rule, shrink by 2 when only a quarter of the fifo is used, don't shrink below nominal size.
+	} else if (session[fd]->max_wdata >= (size_t)2*(session[fd]->flag.server?FIFOSIZE_SERVERLINK:WFIFO_SIZE)
+	       && (session[fd]->wdata_size+addition)*4 < session[fd]->max_wdata
+	) {
+		// shrink rule, shrink by 2 when only a quarter of the fifo is used, don't shrink below nominal size.
 		newsize = session[fd]->max_wdata / 2;
-	}
-	else // no change
+	} else {
+		// no change
 		return 0;
+	}
 
 	RECREATE(session[fd]->wdata, unsigned char, newsize);
 	session[fd]->max_wdata  = newsize;
@@ -682,7 +701,7 @@ int realloc_writefifo(int fd, size_t addition)
 /// advance the RFIFO cursor (marking 'len' bytes as processed)
 int RFIFOSKIP(int fd, size_t len)
 {
-    struct socket_data *s;
+	struct socket_data *s;
 
 	if ( !sockt->session_isActive(fd) )
 		return 0;
@@ -711,8 +730,8 @@ int WFIFOSET(int fd, size_t len)
 		return 0;
 
 	// we have written len bytes to the buffer already before calling WFIFOSET
-	if(s->wdata_size+len > s->max_wdata)
-	{	// actually there was a buffer overflow already
+	if (s->wdata_size+len > s->max_wdata) {
+		// actually there was a buffer overflow already
 		uint32 ip = s->client_addr;
 		ShowFatalError("WFIFOSET: Write Buffer Overflow. Connection %d (%d.%d.%d.%d) has written %u bytes on a %u/%u bytes buffer.\n", fd, CONVIP(ip), (unsigned int)len, (unsigned int)s->wdata_size, (unsigned int)s->max_wdata);
 		ShowDebug("Likely command that caused it: 0x%x\n", (*(uint16*)(s->wdata + s->wdata_size)));
@@ -839,8 +858,8 @@ int do_sockets(int next)
 		if(session[i]->wdata_size)
 			session[i]->func_send(i);
 
-		if(session[i]->flag.eof) //func_send can't free a session, this is safe.
-		{	//Finally, even if there is no data to parse, connections signaled eof should be closed, so we call parse_func [Skotlex]
+		if (session[i]->flag.eof) { //func_send can't free a session, this is safe.
+			//Finally, even if there is no data to parse, connections signaled eof should be closed, so we call parse_func [Skotlex]
 			session[i]->func_parse(i); //This should close the session immediately.
 		}
 	}
@@ -870,7 +889,7 @@ int do_sockets(int next)
 
 		if(!session[i])
 			continue;
-		
+
 		RFIFOFLUSH(i);
 		// after parse, check client's RFIFO size to know if there is an invalid packet (too big and not parsed)
 		if (session[i]->rdata_size == session[i]->max_rdata) {
@@ -883,7 +902,7 @@ int do_sockets(int next)
 	if (sockt->last_tick != socket_data_last_tick)
 	{
 		char buf[1024];
-		
+
 		sprintf(buf, "In: %.03f kB/s (%.03f kB/s, Q: %.03f kB) | Out: %.03f kB/s (%.03f kB/s, Q: %.03f kB) | RAM: %.03f MB", socket_data_i/1024., socket_data_ci/1024., socket_data_qi/1024., socket_data_o/1024., socket_data_co/1024., socket_data_qo/1024., iMalloc->usage()/1024.);
 #ifdef _WIN32
 		SetConsoleTitle(buf);
@@ -905,7 +924,6 @@ int do_sockets(int next)
 // IP rules and DDoS protection
 
 typedef struct connect_history {
-	struct connect_history* next;
 	uint32 ip;
 	int64 tick;
 	int count;
@@ -932,9 +950,7 @@ static int access_debug    = 0;
 static int ddos_count      = 10;
 static int ddos_interval   = 3*1000;
 static int ddos_autoreset  = 10*60*1000;
-/// Connection history, an array of linked lists.
-/// The array's index for any ip is ip&0xFFFF
-static ConnectHistory* connect_history[0x10000];
+DBMap *connect_history = NULL;
 
 static int connect_check_(uint32 ip);
 
@@ -954,7 +970,7 @@ static int connect_check(uint32 ip)
 ///  1 or 2 : Connection Accepted
 static int connect_check_(uint32 ip)
 {
-	ConnectHistory* hist = connect_history[ip&0xFFFF];
+	ConnectHistory* hist = NULL;
 	int i;
 	int is_allowip = 0;
 	int is_denyip = 0;
@@ -991,99 +1007,86 @@ static int connect_check_(uint32 ip)
 	//  1 : Accept
 	//  2 : Unconditional Accept (accepts even if flagged as DDoS)
 	switch(access_order) {
-	case ACO_DENY_ALLOW:
-	default:
-		if( is_denyip )
-			connect_ok = 0; // Reject
-		else if( is_allowip )
-			connect_ok = 2; // Unconditional Accept
-		else
-			connect_ok = 1; // Accept
-		break;
-	case ACO_ALLOW_DENY:
-		if( is_allowip )
-			connect_ok = 2; // Unconditional Accept
-		else if( is_denyip )
-			connect_ok = 0; // Reject
-		else
-			connect_ok = 1; // Accept
-		break;
-	case ACO_MUTUAL_FAILURE:
-		if( is_allowip && !is_denyip )
-			connect_ok = 2; // Unconditional Accept
-		else
-			connect_ok = 0; // Reject
-		break;
+		case ACO_DENY_ALLOW:
+		default:
+			if( is_denyip )
+				connect_ok = 0; // Reject
+			else if( is_allowip )
+				connect_ok = 2; // Unconditional Accept
+			else
+				connect_ok = 1; // Accept
+			break;
+		case ACO_ALLOW_DENY:
+			if( is_allowip )
+				connect_ok = 2; // Unconditional Accept
+			else if( is_denyip )
+				connect_ok = 0; // Reject
+			else
+				connect_ok = 1; // Accept
+			break;
+		case ACO_MUTUAL_FAILURE:
+			if( is_allowip && !is_denyip )
+				connect_ok = 2; // Unconditional Accept
+			else
+				connect_ok = 0; // Reject
+			break;
 	}
 
 	// Inspect connection history
-	while( hist ) {
-		if( ip == hist->ip )
-		{// IP found
-			if( hist->ddos )
-			{// flagged as DDoS
-				return (connect_ok == 2 ? 1 : 0);
-			} else if( DIFF_TICK(timer->gettick(),hist->tick) < ddos_interval )
-			{// connection within ddos_interval
+	if( ( hist = uidb_get(connect_history, ip)) ) { //IP found
+		if( hist->ddos ) {// flagged as DDoS
+			return (connect_ok == 2 ? 1 : 0);
+		} else if( DIFF_TICK(timer->gettick(),hist->tick) < ddos_interval ) {// connection within ddos_interval
 				hist->tick = timer->gettick();
-				if( hist->count++ >= ddos_count )
-				{// DDoS attack detected
+				if( ++hist->count >= ddos_count ) {// DDoS attack detected
 					hist->ddos = 1;
 					ShowWarning("connect_check: DDoS Attack detected from %d.%d.%d.%d!\n", CONVIP(ip));
 					return (connect_ok == 2 ? 1 : 0);
 				}
 				return connect_ok;
-			} else
-			{// not within ddos_interval, clear data
-				hist->tick  = timer->gettick();
-				hist->count = 0;
-				return connect_ok;
-			}
+		} else {// not within ddos_interval, clear data
+			hist->tick  = timer->gettick();
+			hist->count = 0;
+			return connect_ok;
 		}
-		hist = hist->next;
 	}
 	// IP not found, add to history
 	CREATE(hist, ConnectHistory, 1);
-	memset(hist, 0, sizeof(ConnectHistory));
 	hist->ip   = ip;
 	hist->tick = timer->gettick();
-	hist->next = connect_history[ip&0xFFFF];
-	connect_history[ip&0xFFFF] = hist;
+	uidb_put(connect_history, ip, hist);
 	return connect_ok;
 }
 
 /// Timer function.
 /// Deletes old connection history records.
 static int connect_check_clear(int tid, int64 tick, int id, intptr_t data) {
-	int i;
 	int clear = 0;
 	int list  = 0;
-	ConnectHistory root;
-	ConnectHistory* prev_hist;
-	ConnectHistory* hist;
-
-	for( i=0; i < 0x10000 ; ++i ){
-		prev_hist = &root;
-		root.next = hist = connect_history[i];
-		while( hist ){
-			if( (!hist->ddos && DIFF_TICK(tick,hist->tick) > ddos_interval*3) ||
-					(hist->ddos && DIFF_TICK(tick,hist->tick) > ddos_autoreset) )
+	ConnectHistory *hist = NULL;
+	DBIterator *iter;
+	
+	if( !db_size(connect_history) )
+		return 0;
+	
+	iter = db_iterator(connect_history);
+	
+	for( hist = dbi_first(iter); dbi_exists(iter); hist = dbi_next(iter) ){
+		if( (!hist->ddos && DIFF_TICK(tick,hist->tick) > ddos_interval*3) ||
+			(hist->ddos && DIFF_TICK(tick,hist->tick) > ddos_autoreset) )
 			{// Remove connection history
-				prev_hist->next = hist->next;
-				aFree(hist);
-				hist = prev_hist->next;
+				uidb_remove(connect_history, hist->ip);
 				clear++;
-			} else {
-				prev_hist = hist;
-				hist = hist->next;
 			}
-			list++;
-		}
-		connect_history[i] = root.next;
-	}
+		list++;
+ 	}
+	
+	dbi_destroy(iter);
+	
 	if( access_debug ){
 		ShowInfo("connect_check_clear: Cleared %d of %d from IP list.\n", clear, list);
 	}
+	
 	return list;
 }
 
@@ -1207,17 +1210,8 @@ void socket_final(void)
 {
 	int i;
 #ifndef MINICORE
-	ConnectHistory* hist;
-	ConnectHistory* next_hist;
-
-	for( i=0; i < 0x10000; ++i ){
-		hist = connect_history[i];
-		while( hist ){
-			next_hist = hist->next;
-			aFree(hist);
-			hist = next_hist;
-		}
-	}
+	if( connect_history )
+		db_destroy(connect_history);
 	if( access_allow )
 		aFree(access_allow);
 	if( access_deny )
@@ -1232,7 +1226,7 @@ void socket_final(void)
 	aFree(session[0]->rdata);
 	aFree(session[0]->wdata);
 	aFree(session[0]);
-	
+
 	aFree(session);
 }
 
@@ -1261,41 +1255,38 @@ int socket_getips(uint32* ips, int max)
 #ifdef WIN32
 	{
 		char fullhost[255];
-		u_long** a;
-		struct hostent* hent;
 
 		// XXX This should look up the local IP addresses in the registry
 		// instead of calling gethostbyname. However, the way IP addresses
 		// are stored in the registry is annoyingly complex, so I'll leave
 		// this as T.B.D. [Meruru]
-		if( gethostname(fullhost, sizeof(fullhost)) == SOCKET_ERROR )
-		{
+		if (gethostname(fullhost, sizeof(fullhost)) == SOCKET_ERROR) {
 			ShowError("socket_getips: No hostname defined!\n");
 			return 0;
-		}
-		else
-		{
-			hent = gethostbyname(fullhost);
+		} else {
+			u_long** a;
+			struct hostent *hent =gethostbyname(fullhost);
 			if( hent == NULL ){
 				ShowError("socket_getips: Cannot resolve our own hostname to an IP address\n");
 				return 0;
 			}
 			a = (u_long**)hent->h_addr_list;
-			for( ; a[num] != NULL && num < max; ++num)
+			for (; num < max && a[num] != NULL; ++num)
 				ips[num] = (uint32)ntohl(*a[num]);
 		}
 	}
 #else // not WIN32
 	{
-		int pos;
 		int fd;
 		char buf[2*16*sizeof(struct ifreq)];
 		struct ifconf ic;
-		struct ifreq* ir;
-		struct sockaddr_in* a;
 		u_long ad;
 
 		fd = sSocket(AF_INET, SOCK_STREAM, 0);
+		if (fd == -1) {
+			ShowError("socket_getips: Unable to create a socket!\n");
+			return 0;
+		}
 
 		memset(buf, 0x00, sizeof(buf));
 
@@ -1303,20 +1294,18 @@ int socket_getips(uint32* ips, int max)
 		// interfaces than will fit in the buffer
 		ic.ifc_len = sizeof(buf);
 		ic.ifc_buf = buf;
-		if( sIoctl(fd, SIOCGIFCONF, &ic) == -1 )
-		{
+		if (sIoctl(fd, SIOCGIFCONF, &ic) == -1) {
 			ShowError("socket_getips: SIOCGIFCONF failed!\n");
+			sClose(fd);
 			return 0;
-		}
-		else
-		{
-			for( pos=0; pos < ic.ifc_len && num < max; )
-			{
-				ir = (struct ifreq*)(buf+pos);
-				a = (struct sockaddr_in*) &(ir->ifr_addr);
-				if( a->sin_family == AF_INET ){
+		} else {
+			int pos;
+			for (pos = 0; pos < ic.ifc_len && num < max; ) {
+				struct ifreq *ir = (struct ifreq*)(buf+pos);
+				struct sockaddr_in *a = (struct sockaddr_in*) &(ir->ifr_addr);
+				if (a->sin_family == AF_INET) {
 					ad = ntohl(a->sin_addr.s_addr);
-					if( ad != INADDR_LOOPBACK && ad != INADDR_ANY )
+					if (ad != INADDR_LOOPBACK && ad != INADDR_ANY)
 						ips[num++] = (uint32)ad;
 				}
 	#if (defined(BSD) && BSD >= 199103) || defined(_AIX) || defined(__APPLE__)
@@ -1396,7 +1385,7 @@ void socket_init(void)
 #endif
 
 	CREATE(session, struct socket_data *, FD_SETSIZE);
-	
+
 	socket_config_read(SOCKET_CONF_FILENAME);
 
 	// initialize last send-receive tick
@@ -1408,13 +1397,13 @@ void socket_init(void)
 
 #ifndef MINICORE
 	// Delete old connection history every 5 minutes
-	memset(connect_history, 0, sizeof(connect_history));
+	connect_history = uidb_alloc(DB_OPT_RELEASE_DATA);
 	timer->add_func_list(connect_check_clear, "connect_check_clear");
 	timer->add_interval(timer->gettick()+1000, connect_check_clear, 0, 0, 5*60*1000);
 #endif
 
 	ShowInfo("Server supports up to '"CL_WHITE"%"PRId64""CL_RESET"' concurrent connections.\n", rlim_cur);
-	
+
 	/* Hercules Plugin Manager */
 	HPM->share(session,"session");
 }
@@ -1498,11 +1487,11 @@ void socket_datasync(int fd, bool send) {
 
 		WFIFOW(fd, 0) = 0x2b0a;
 		WFIFOW(fd, 2) = p_len;
-		
+
 		for( i = 0; i < alen; i++ ) {
 			WFIFOL(fd, 4 + ( i * 4 ) ) = data_list[i].length;
 		}
-		
+
 		WFIFOSET(fd, p_len);
 	} else {
 		for( i = 0; i < alen; i++ ) {
@@ -1602,7 +1591,7 @@ void send_shortlist_do_sends()
 
 void socket_defaults(void) {
 	sockt = &sockt_s;
-	
+
 	sockt->fd_max = 0;
 	/* */
 	sockt->stall_time = 60;

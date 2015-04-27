@@ -210,8 +210,8 @@ int intif_wis_message(struct map_session_data *sd, char *nick, char *mes, size_t
 	if (intif->CheckForCharServer())
 		return 0;
 
-	if (chrif->other_mapserver_count < 1)
-	{	//Character not found.
+	if (chrif->other_mapserver_count < 1) {
+		//Character not found.
 		clif->wis_end(sd->fd, 1);
 		return 0;
 	}
@@ -395,9 +395,9 @@ int intif_request_registry(struct map_session_data *sd, int flag)
 	WFIFOW(inter_fd,0) = 0x3005;
 	WFIFOL(inter_fd,2) = sd->status.account_id;
 	WFIFOL(inter_fd,6) = sd->status.char_id;
-	WFIFOB(inter_fd,10) = (flag&1?1:0); //Request Acc Reg 2
-	WFIFOB(inter_fd,11) = (flag&2?1:0); //Request Acc Reg
-	WFIFOB(inter_fd,12) = (flag&4?1:0); //Request Char Reg
+	WFIFOB(inter_fd,10) = (flag&1) ? 1 : 0; //Request Acc Reg 2
+	WFIFOB(inter_fd,11) = (flag&2) ? 1 : 0; //Request Acc Reg
+	WFIFOB(inter_fd,12) = (flag&4) ? 1 : 0; //Request Char Reg
 	WFIFOSET(inter_fd,13);
 
 	return 0;
@@ -924,8 +924,8 @@ void intif_parse_WisMessage(int fd) {
 		strcmp(sd->ignore[i].name, wisp_source) != 0
 		; i++);
 
-	if (i < MAX_IGNORE_LIST && sd->ignore[i].name[0] != '\0')
-	{	//Ignored
+	if (i < MAX_IGNORE_LIST && sd->ignore[i].name[0] != '\0') {
+		//Ignored
 		intif_wis_replay(id, 2);
 		return;
 	}
@@ -968,7 +968,7 @@ void mapif_parse_WisToGM(int fd)
 {
 	int permission, mes_len;
 	char Wisp_name[NAME_LENGTH];
-	char mbuf[255];
+	char mbuf[255] = { 0 };
 	char *message;
 
 	mes_len =  RFIFOW(fd,2) - 32;
@@ -987,7 +987,7 @@ void mapif_parse_WisToGM(int fd)
 // Request player registre
 void intif_parse_Registers(int fd)
 {
-	int i, flag;
+	int flag;
 	struct map_session_data *sd;
 	int account_id = RFIFOL(fd,4), char_id = RFIFOL(fd,8);
 	struct auth_node *node = chrif->auth_check(account_id, char_id, ST_LOGIN);
@@ -1025,9 +1025,9 @@ void intif_parse_Registers(int fd)
 	pc->reg_load = true;
 	
 	if( RFIFOW(fd, 14) ) {
-		char key[32], sval[254];
+		char key[32];
 		unsigned int index;
-		int max = RFIFOW(fd, 14), cursor = 16, ival;
+		int max = RFIFOW(fd, 14), cursor = 16, i;
 		
 		script->parser_current_file = "loading char/acc variables";//for script_add_str to refer to here in case errors occur
 		
@@ -1037,8 +1037,9 @@ void intif_parse_Registers(int fd)
 		 * str type
 		 * { keyLength(B), key(<keyLength>), index(L), valLength(B), val(<valLength>) }
 		 **/
-		if( type ) {
+		if (type) {
 			for(i = 0; i < max; i++) {
+				char sval[254];
 				safestrncpy(key, (char*)RFIFOP(fd, cursor + 1), RFIFOB(fd, cursor));
 				cursor += RFIFOB(fd, cursor) + 1;
 				
@@ -1058,6 +1059,7 @@ void intif_parse_Registers(int fd)
 		 **/
 		} else {
 			for(i = 0; i < max; i++) {
+				int ival;
 				safestrncpy(key, (char*)RFIFOP(fd, cursor + 1), RFIFOB(fd, cursor));
 				cursor += RFIFOB(fd, cursor) + 1;
 				
@@ -1098,7 +1100,7 @@ void intif_parse_LoadGuildStorage(int fd)
 			return;
 		}
 	}
-	gstor=gstorage->id2storage(guild_id);
+	gstor=gstorage->ensure(guild_id);
 	if(!gstor) {
 		ShowWarning("intif_parse_LoadGuildStorage: error guild_id %d not exist\n",guild_id);
 		return;
@@ -1113,7 +1115,7 @@ void intif_parse_LoadGuildStorage(int fd)
 	}
 	if (RFIFOW(fd,2)-13 != sizeof(struct guild_storage)) {
 		ShowError("intif_parse_LoadGuildStorage: data size mismatch %d != %"PRIuS"\n", RFIFOW(fd,2)-13, sizeof(struct guild_storage));
- 		gstor->storage_status = 0;
+		gstor->storage_status = 0;
 		return;
 	}
 
@@ -1247,9 +1249,6 @@ void intif_parse_GuildBasicInfoChanged(int fd) {
 		case GBI_SKILLLV: {
 			int idx, max;
 			struct guild_skill *gs = (struct guild_skill *)RFIFOP(fd,10);
-
-			if( gs == NULL )
-				return;
 
 			idx = gs->id - GD_SKILLBASE;
 			max = guild->skill_get_max(gs->id);
@@ -1583,7 +1582,7 @@ void intif_parse_MailInboxReceived(int fd) {
 		clif->mail_refreshinbox(sd);
 	else if( battle_config.mail_show_status && ( battle_config.mail_show_status == 1 || sd->mail.inbox.unread ) ) {
 		char output[128];
-		sprintf(output, msg_txt(510), sd->mail.inbox.unchecked, sd->mail.inbox.unread + sd->mail.inbox.unchecked);
+		sprintf(output, msg_sd(sd,510), sd->mail.inbox.unchecked, sd->mail.inbox.unread + sd->mail.inbox.unchecked);
 		clif_disp_onlyself(sd, output, strlen(output));
 	}
 }
@@ -2136,7 +2135,7 @@ void intif_request_accinfo( int u_fd, int aid, int group_lv, char* query ) {
 	WFIFOL(inter_fd,2) = u_fd;
 	WFIFOL(inter_fd,6) = aid;
 	WFIFOL(inter_fd,10) = group_lv;
-    safestrncpy((char *)WFIFOP(inter_fd,14), query, NAME_LENGTH);
+	safestrncpy((char *)WFIFOP(inter_fd,14), query, NAME_LENGTH);
 
 	WFIFOSET(inter_fd,2 + 4 + 4 + 4 + NAME_LENGTH);
 
@@ -2165,7 +2164,7 @@ void intif_parse_MessageToFD(int fd) {
  *------------------------------------------*/
 void intif_itembound_req(int char_id,int aid,int guild_id) {
 #ifdef GP_BOUND_ITEMS
-	struct guild_storage *gstor = gstorage->id2storage2(guild_id);
+	struct guild_storage *gstor = idb_get(gstorage->db,guild_id);
 	WFIFOHEAD(inter_fd,12);
 	WFIFOW(inter_fd,0) = 0x3056;
 	WFIFOL(inter_fd,2) = char_id;
@@ -2183,7 +2182,7 @@ void intif_parse_Itembound_ack(int fd) {
 	struct guild_storage *gstor;
 	int guild_id = RFIFOW(fd,6);
 
-	gstor = gstorage->id2storage2(guild_id);
+	gstor = idb_get(gstorage->db,guild_id);
 	if(gstor)
 		gstor->lock = 0; //Unlock now that operation is completed
 #endif
@@ -2196,12 +2195,13 @@ int intif_parse(int fd)
 {
 	int packet_len, cmd;
 	cmd = RFIFOW(fd,0);
-    // Verify ID of the packet
-	if(cmd<0x3800 || cmd>=0x3800+(sizeof(intif->packet_len_table)/sizeof(intif->packet_len_table[0])) ||
-	   intif->packet_len_table[cmd-0x3800]==0){
-	   	return 0;
+	// Verify ID of the packet
+	if (cmd < 0x3800 || cmd >= 0x3800+(sizeof(intif->packet_len_table)/sizeof(intif->packet_len_table[0]))
+	 || intif->packet_len_table[cmd-0x3800] == 0
+	) {
+		return 0;
 	}
-    // Check the length of the packet
+	// Check the length of the packet
 	packet_len = intif->packet_len_table[cmd-0x3800];
 	if(packet_len==-1){
 		if(RFIFOREST(fd)<4)
@@ -2211,7 +2211,7 @@ int intif_parse(int fd)
 	if((int)RFIFOREST(fd)<packet_len){
 		return 2;
 	}
-    // Processing branch
+	// Processing branch
 	switch(cmd){
 		case 0x3800:
 			if (RFIFOL(fd,4) == 0xFF000000) //Normal announce.
@@ -2219,57 +2219,57 @@ int intif_parse(int fd)
 			else //Color announce.
 				clif->broadcast2(NULL, (char *) RFIFOP(fd,16), packet_len-16, RFIFOL(fd,4), RFIFOW(fd,8), RFIFOW(fd,10), RFIFOW(fd,12), RFIFOW(fd,14), ALL_CLIENT);
 			break;
-		case 0x3801:	intif->pWisMessage(fd); break;
-		case 0x3802:	intif->pWisEnd(fd); break;
-		case 0x3803:	intif->pWisToGM(fd); break;
-		case 0x3804:	intif->pRegisters(fd); break;
-		case 0x3806:	intif->pChangeNameOk(fd); break;
-		case 0x3807:	intif->pMessageToFD(fd); break;
-		case 0x3818:	intif->pLoadGuildStorage(fd); break;
-		case 0x3819:	intif->pSaveGuildStorage(fd); break;
-		case 0x3820:	intif->pPartyCreated(fd); break;
-		case 0x3821:	intif->pPartyInfo(fd); break;
-		case 0x3822:	intif->pPartyMemberAdded(fd); break;
-		case 0x3823:	intif->pPartyOptionChanged(fd); break;
-		case 0x3824:	intif->pPartyMemberWithdraw(fd); break;
-		case 0x3825:	intif->pPartyMove(fd); break;
-		case 0x3826:	intif->pPartyBroken(fd); break;
-		case 0x3827:	intif->pPartyMessage(fd); break;
-		case 0x3830:	intif->pGuildCreated(fd); break;
-		case 0x3831:	intif->pGuildInfo(fd); break;
-		case 0x3832:	intif->pGuildMemberAdded(fd); break;
-		case 0x3834:	intif->pGuildMemberWithdraw(fd); break;
-		case 0x3835:	intif->pGuildMemberInfoShort(fd); break;
-		case 0x3836:	intif->pGuildBroken(fd); break;
-		case 0x3837:	intif->pGuildMessage(fd); break;
-		case 0x3839:	intif->pGuildBasicInfoChanged(fd); break;
-		case 0x383a:	intif->pGuildMemberInfoChanged(fd); break;
-		case 0x383b:	intif->pGuildPosition(fd); break;
-		case 0x383c:	intif->pGuildSkillUp(fd); break;
-		case 0x383d:	intif->pGuildAlliance(fd); break;
-		case 0x383e:	intif->pGuildNotice(fd); break;
-		case 0x383f:	intif->pGuildEmblem(fd); break;
-		case 0x3840:	intif->pGuildCastleDataLoad(fd); break;
-		case 0x3843:	intif->pGuildMasterChanged(fd); break;
+		case 0x3801: intif->pWisMessage(fd); break;
+		case 0x3802: intif->pWisEnd(fd); break;
+		case 0x3803: intif->pWisToGM(fd); break;
+		case 0x3804: intif->pRegisters(fd); break;
+		case 0x3806: intif->pChangeNameOk(fd); break;
+		case 0x3807: intif->pMessageToFD(fd); break;
+		case 0x3818: intif->pLoadGuildStorage(fd); break;
+		case 0x3819: intif->pSaveGuildStorage(fd); break;
+		case 0x3820: intif->pPartyCreated(fd); break;
+		case 0x3821: intif->pPartyInfo(fd); break;
+		case 0x3822: intif->pPartyMemberAdded(fd); break;
+		case 0x3823: intif->pPartyOptionChanged(fd); break;
+		case 0x3824: intif->pPartyMemberWithdraw(fd); break;
+		case 0x3825: intif->pPartyMove(fd); break;
+		case 0x3826: intif->pPartyBroken(fd); break;
+		case 0x3827: intif->pPartyMessage(fd); break;
+		case 0x3830: intif->pGuildCreated(fd); break;
+		case 0x3831: intif->pGuildInfo(fd); break;
+		case 0x3832: intif->pGuildMemberAdded(fd); break;
+		case 0x3834: intif->pGuildMemberWithdraw(fd); break;
+		case 0x3835: intif->pGuildMemberInfoShort(fd); break;
+		case 0x3836: intif->pGuildBroken(fd); break;
+		case 0x3837: intif->pGuildMessage(fd); break;
+		case 0x3839: intif->pGuildBasicInfoChanged(fd); break;
+		case 0x383a: intif->pGuildMemberInfoChanged(fd); break;
+		case 0x383b: intif->pGuildPosition(fd); break;
+		case 0x383c: intif->pGuildSkillUp(fd); break;
+		case 0x383d: intif->pGuildAlliance(fd); break;
+		case 0x383e: intif->pGuildNotice(fd); break;
+		case 0x383f: intif->pGuildEmblem(fd); break;
+		case 0x3840: intif->pGuildCastleDataLoad(fd); break;
+		case 0x3843: intif->pGuildMasterChanged(fd); break;
 			
 		//Quest system
-		case 0x3860:	intif->pQuestLog(fd); break;
-		case 0x3861:	intif->pQuestSave(fd); break;
+		case 0x3860: intif->pQuestLog(fd); break;
+		case 0x3861: intif->pQuestSave(fd); break;
 			
 		// Mail System
-		case 0x3848:	intif->pMailInboxReceived(fd); break;
-		case 0x3849:	intif->pMailNew(fd); break;
-		case 0x384a:	intif->pMailGetAttach(fd); break;
-		case 0x384b:	intif->pMailDelete(fd); break;
-		case 0x384c:	intif->pMailReturn(fd); break;
-		case 0x384d:	intif->pMailSend(fd); break;
+		case 0x3848: intif->pMailInboxReceived(fd); break;
+		case 0x3849: intif->pMailNew(fd); break;
+		case 0x384a: intif->pMailGetAttach(fd); break;
+		case 0x384b: intif->pMailDelete(fd); break;
+		case 0x384c: intif->pMailReturn(fd); break;
+		case 0x384d: intif->pMailSend(fd); break;
 		// Auction System
-		case 0x3850:	intif->pAuctionResults(fd); break;
-		case 0x3851:	intif->pAuctionRegister(fd); break;
-		case 0x3852:	intif->pAuctionCancel(fd); break;
-		case 0x3853:	intif->pAuctionClose(fd); break;
-		case 0x3854:	intif->pAuctionMessage(fd); break;
-		case 0x3855:	intif->pAuctionBid(fd); break;
+		case 0x3850: intif->pAuctionResults(fd); break;
+		case 0x3851: intif->pAuctionRegister(fd); break;
+		case 0x3852: intif->pAuctionCancel(fd); break;
+		case 0x3853: intif->pAuctionClose(fd); break;
+		case 0x3854: intif->pAuctionMessage(fd); break;
+		case 0x3855: intif->pAuctionBid(fd); break;
 		//Bound items
 		case 0x3856:
 #ifdef GP_BOUND_ITEMS
@@ -2279,27 +2279,27 @@ int intif_parse(int fd)
 #endif
 			break;
 		// Mercenary System
-		case 0x3870:	intif->pMercenaryReceived(fd); break;
-		case 0x3871:	intif->pMercenaryDeleted(fd); break;
-		case 0x3872:	intif->pMercenarySaved(fd); break;
+		case 0x3870: intif->pMercenaryReceived(fd); break;
+		case 0x3871: intif->pMercenaryDeleted(fd); break;
+		case 0x3872: intif->pMercenarySaved(fd); break;
 		// Elemental System
-		case 0x387c:	intif->pElementalReceived(fd); break;
-		case 0x387d:	intif->pElementalDeleted(fd); break;
-		case 0x387e:	intif->pElementalSaved(fd); break;
+		case 0x387c: intif->pElementalReceived(fd); break;
+		case 0x387d: intif->pElementalDeleted(fd); break;
+		case 0x387e: intif->pElementalSaved(fd); break;
 			
-		case 0x3880:	intif->pCreatePet(fd); break;
-		case 0x3881:	intif->pRecvPetData(fd); break;
-		case 0x3882:	intif->pSavePetOk(fd); break;
-		case 0x3883:	intif->pDeletePetOk(fd); break;
-		case 0x3890:	intif->pCreateHomunculus(fd); break;
-		case 0x3891:	intif->pRecvHomunculusData(fd); break;
-		case 0x3892:	intif->pSaveHomunculusOk(fd); break;
-		case 0x3893:	intif->pDeleteHomunculusOk(fd); break;
+		case 0x3880: intif->pCreatePet(fd); break;
+		case 0x3881: intif->pRecvPetData(fd); break;
+		case 0x3882: intif->pSavePetOk(fd); break;
+		case 0x3883: intif->pDeletePetOk(fd); break;
+		case 0x3890: intif->pCreateHomunculus(fd); break;
+		case 0x3891: intif->pRecvHomunculusData(fd); break;
+		case 0x3892: intif->pSaveHomunculusOk(fd); break;
+		case 0x3893: intif->pDeleteHomunculusOk(fd); break;
 	default:
 		ShowError("intif_parse : unknown packet %d %x\n",fd,RFIFOW(fd,0));
 		return 0;
 	}
-    // Skip packet
+	// Skip packet
 	RFIFOSKIP(fd,packet_len);
 	return 1;
 }

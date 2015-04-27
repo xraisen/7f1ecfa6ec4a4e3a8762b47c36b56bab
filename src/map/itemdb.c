@@ -16,6 +16,7 @@
 #include "mob.h"    // MAX_MOB_DB
 #include "pc.h"     // W_MUSICAL, W_WHIP
 #include "script.h" // item script processing
+#include "../common/HPM.h"
 #include "../common/conf.h"
 #include "../common/malloc.h"
 #include "../common/nullpo.h"
@@ -320,8 +321,8 @@ void itemdb_jobid2mapid(unsigned int *bclass, unsigned int jobmask)
 	int i;
 	bclass[0]= bclass[1]= bclass[2]= 0;
 	//Base classes
-	if (jobmask & 1<<JOB_NOVICE)
-	{	//Both Novice/Super-Novice are counted with the same ID
+	if (jobmask & 1<<JOB_NOVICE) {
+		//Both Novice/Super-Novice are counted with the same ID
 		bclass[0] |= 1<<MAPID_NOVICE;
 		bclass[1] |= 1<<MAPID_NOVICE;
 	}
@@ -354,9 +355,10 @@ void itemdb_jobid2mapid(unsigned int *bclass, unsigned int jobmask)
 		bclass[2] |= 1<<MAPID_MERCHANT;
 	if (jobmask & 1<<JOB_BARD)
 		bclass[2] |= 1<<MAPID_ARCHER;
-//	Bard/Dancer share the same slot now.
-//	if (jobmask & 1<<JOB_DANCER)
-//		bclass[2] |= 1<<MAPID_ARCHER;
+#if 0 // Bard/Dancer share the same slot now.
+	if (jobmask & 1<<JOB_DANCER)
+		bclass[2] |= 1<<MAPID_ARCHER;
+#endif // 0
 	if (jobmask & 1<<JOB_ROGUE)
 		bclass[2] |= 1<<MAPID_THIEF;
 	//Special classes that don't fit above.
@@ -487,16 +489,16 @@ int itemdb_isequip2(struct item_data *data) {
  *------------------------------------------*/
 int itemdb_isstackable(int nameid)
 {
-  int type=itemdb_type(nameid);
-  switch(type) {
-	  case IT_WEAPON:
-	  case IT_ARMOR:
-	  case IT_PETEGG:
-	  case IT_PETARMOR:
-		  return 0;
-	  default:
-		  return 1;
-  }
+	int type=itemdb_type(nameid);
+	switch(type) {
+		case IT_WEAPON:
+		case IT_ARMOR:
+		case IT_PETEGG:
+		case IT_PETARMOR:
+			return 0;
+		default:
+			return 1;
+	}
 }
 
 /*==========================================
@@ -504,16 +506,16 @@ int itemdb_isstackable(int nameid)
  *------------------------------------------*/
 int itemdb_isstackable2(struct item_data *data)
 {
-  nullpo_ret(data);
-  switch(data->type) {
-	  case IT_WEAPON:
-	  case IT_ARMOR:
-	  case IT_PETEGG:
-	  case IT_PETARMOR:
-		  return 0;
-	  default:
-		  return 1;
-  }
+	nullpo_ret(data);
+	switch(data->type) {
+		case IT_WEAPON:
+		case IT_ARMOR:
+		case IT_PETEGG:
+		case IT_PETARMOR:
+			return 0;
+		default:
+			return 1;
+	}
 }
 
 
@@ -576,7 +578,7 @@ int itemdb_isrestricted(struct item* item, int gmlv, int gmlv2, int (*func)(stru
 }
 
 /*==========================================
- *	Specifies if item-type should drop unidentified.
+ * Specifies if item-type should drop unidentified.
  *------------------------------------------*/
 int itemdb_isidentified(int nameid) {
 	int type=itemdb_type(nameid);
@@ -762,7 +764,7 @@ void itemdb_write_cached_packages(const char *config_filename) {
 }
 bool itemdb_read_cached_packages(const char *config_filename) {
 	FILE *file;
-	unsigned short pcount;
+	unsigned short pcount = 0;
 	unsigned short i;
 
 	if( !(file = HCache->open(config_filename,"rb")) ) {
@@ -1120,7 +1122,7 @@ void itemdb_read_packages(void) {
 
 void itemdb_read_chains(void) {
 	config_t item_chain_conf;
-	config_setting_t *itc = NULL, *entry = NULL;
+	config_setting_t *itc = NULL;
 #ifdef RENEWAL
 	const char *config_filename = "db/re/item_chain.conf"; // FIXME hardcoded name
 #else
@@ -1144,6 +1146,7 @@ void itemdb_read_chains(void) {
 		struct item_chain_entry *prev = NULL;
 		const char *name = config_setting_name(itc);
 		int c = 0;
+		config_setting_t *entry = NULL;
 		
 		script->set_constant2(name,i-1,0);
 		itemdb->chains[count].qty = (unsigned short)libconfig->setting_length(itc);
@@ -1425,7 +1428,7 @@ int itemdb_validate_entry(struct item_data *entry, int n, const char *source) {
 		entry->type = IT_ETC;
 	}
 
-	if (entry->flag.trade_restriction < 0 || entry->flag.trade_restriction > ITR_ALL) {
+	if (entry->flag.trade_restriction > ITR_ALL) {
 		ShowWarning("itemdb_validate_entry: Invalid trade restriction flag 0x%x for item %d (%s) in '%s', defaulting to none.\n",
 		            entry->flag.trade_restriction, entry->nameid, entry->jname, source);
 		entry->flag.trade_restriction = ITR_NONE;
@@ -1498,6 +1501,11 @@ int itemdb_validate_entry(struct item_data *entry, int n, const char *source) {
 
 	*item = *entry;
 	return item->nameid;
+}
+
+void itemdb_readdb_additional_fields(int itemid, config_setting_t *it, int n, const char *source)
+{
+    // do nothing. plugins can do own work
 }
 
 /**
@@ -1675,7 +1683,7 @@ int itemdb_readdb_libconfig_sub(config_setting_t *it, int n, const char *source)
 	 * OnUnequipScript: <" OnUnequip Script ">
 	 * Inherit: inherit or override
 	 */
-	if( !libconfig->setting_lookup_int(it, "Id", &i32) ) {
+	if( !itemdb->lookup_const(it, "Id", &i32) ) {
 		ShowWarning("itemdb_readdb_libconfig_sub: Invalid or missing id in \"%s\", entry #%d, skipping.\n", source, n);
 		return 0;
 	}
@@ -1710,57 +1718,57 @@ int itemdb_readdb_libconfig_sub(config_setting_t *it, int n, const char *source)
 		safestrncpy(id.jname, str, sizeof(id.jname));
 	}
 
-	if( libconfig->setting_lookup_int(it, "Type", &i32) )
+	if( itemdb->lookup_const(it, "Type", &i32) )
 		id.type = i32;
 	else if( !inherit )
-		id.type = IT_UNKNOWN;
+		id.type = IT_ETC;
 
-	if( libconfig->setting_lookup_int(it, "Buy", &i32) )
+	if( itemdb->lookup_const(it, "Buy", &i32) )
 		id.value_buy = i32;
 	else if( !inherit )
 		id.value_buy = -1;
-	if( libconfig->setting_lookup_int(it, "Sell", &i32) )
+	if( itemdb->lookup_const(it, "Sell", &i32) )
 		id.value_sell = i32;
 	else if( !inherit )
 		id.value_sell = -1;
 
-	if( libconfig->setting_lookup_int(it, "Weight", &i32) && i32 >= 0 )
+	if( itemdb->lookup_const(it, "Weight", &i32) && i32 >= 0 )
 		id.weight = i32;
 
-	if( libconfig->setting_lookup_int(it, "Atk", &i32) && i32 >= 0 )
+	if( itemdb->lookup_const(it, "Atk", &i32) && i32 >= 0 )
 		id.atk = i32;
 
-	if( libconfig->setting_lookup_int(it, "Matk", &i32) && i32 >= 0 )
+	if( itemdb->lookup_const(it, "Matk", &i32) && i32 >= 0 )
 		id.matk = i32;
 
-	if( libconfig->setting_lookup_int(it, "Def", &i32) && i32 >= 0 )
+	if( itemdb->lookup_const(it, "Def", &i32) && i32 >= 0 )
 		id.def = i32;
 
-	if( libconfig->setting_lookup_int(it, "Range", &i32) && i32 >= 0 )
+	if( itemdb->lookup_const(it, "Range", &i32) && i32 >= 0 )
 		id.range = i32;
 
-	if( libconfig->setting_lookup_int(it, "Slots", &i32) && i32 >= 0 )
+	if( itemdb->lookup_const(it, "Slots", &i32) && i32 >= 0 )
 		id.slot = i32;
 
-	if( libconfig->setting_lookup_int(it, "Job", &i32) ) // This is an unsigned value, do not check for >= 0
+	if( itemdb->lookup_const(it, "Job", &i32) ) // This is an unsigned value, do not check for >= 0
 		itemdb->jobid2mapid(id.class_base, (unsigned int)i32);
 	else if( !inherit )
 		itemdb->jobid2mapid(id.class_base, UINT_MAX);
 
-	if( libconfig->setting_lookup_int(it, "Upper", &i32) && i32 >= 0 )
+	if( itemdb->lookup_const(it, "Upper", &i32) && i32 >= 0 )
 		id.class_upper = (unsigned int)i32;
 	else if( !inherit )
 		id.class_upper = ITEMUPPER_ALL;
 
-	if( libconfig->setting_lookup_int(it, "Gender", &i32) && i32 >= 0 )
+	if( itemdb->lookup_const(it, "Gender", &i32) && i32 >= 0 )
 		id.sex = i32;
 	else if( !inherit )
 		id.sex = 2;
 
-	if( libconfig->setting_lookup_int(it, "Loc", &i32) && i32 >= 0 )
+	if( itemdb->lookup_const(it, "Loc", &i32) && i32 >= 0 )
 		id.equip = i32;
 
-	if( libconfig->setting_lookup_int(it, "WeaponLv", &i32) && i32 >= 0 )
+	if( itemdb->lookup_const(it, "WeaponLv", &i32) && i32 >= 0 )
 		id.wlv = i32;
 
 	if( (t = libconfig->setting_get_member(it, "EquipLv")) ) {
@@ -1777,7 +1785,7 @@ int itemdb_readdb_libconfig_sub(config_setting_t *it, int n, const char *source)
 	if( (t = libconfig->setting_get_member(it, "Refine")) )
 		id.flag.no_refine = libconfig->setting_get_bool(t) ? 0 : 1;
 
-	if( libconfig->setting_lookup_int(it, "View", &i32) && i32 >= 0 )
+	if( itemdb->lookup_const(it, "View", &i32) && i32 >= 0 )
 		id.look = i32;
 
 	if( (t = libconfig->setting_get_member(it, "BindOnEquip")) )
@@ -1786,9 +1794,12 @@ int itemdb_readdb_libconfig_sub(config_setting_t *it, int n, const char *source)
 	if ( (t = libconfig->setting_get_member(it, "BuyingStore")) )
 		id.flag.buyingstore = libconfig->setting_get_bool(t) ? 1 : 0;
 
-	if (libconfig->setting_lookup_int(it, "Delay", &i32) && i32 >= 0)
+	if ((t = libconfig->setting_get_member(it, "KeepAfterUse")))
+		id.flag.keepafteruse = libconfig->setting_get_bool(t) ? 1 : 0;
+
+	if (itemdb->lookup_const(it, "Delay", &i32) && i32 >= 0)
 		id.delay = i32;
-	
+
 	if ( (t = libconfig->setting_get_member(it, "Trade")) ) {
 		if (config_setting_is_group(t)) {
 			config_setting_t *tt = NULL;
@@ -1888,7 +1899,7 @@ int itemdb_readdb_libconfig_sub(config_setting_t *it, int n, const char *source)
 		}
 	}
 
-	if (libconfig->setting_lookup_int(it, "Sprite", &i32) && i32 >= 0) {
+	if (itemdb->lookup_const(it, "Sprite", &i32) && i32 >= 0) {
 		id.flag.available = 1;
 		id.view_id = i32;
 	}
@@ -1903,6 +1914,24 @@ int itemdb_readdb_libconfig_sub(config_setting_t *it, int n, const char *source)
 		id.unequip_script = *str ? script->parse(str, source, -id.nameid, SCRIPT_IGNORE_EXTERNAL_BRACKETS, NULL) : NULL;
 
 	return itemdb->validate_entry(&id, n, source);
+}
+
+bool itemdb_lookup_const(const config_setting_t *it, const char *name, int *value)
+{
+	if (libconfig->setting_lookup_int(it, name, value))
+	{
+		return true;
+	}
+	else
+	{
+		const char *str = NULL;
+		if (libconfig->setting_lookup_string(it, name, &str))
+		{
+			if (*str && script->get_constant(str, value))
+				return true;
+		}
+	}
+	return false;
 }
 
 /**
@@ -1932,6 +1961,7 @@ int itemdb_readdb_libconfig(const char *filename) {
 		if( !nameid )
 			continue;
 
+		itemdb->readdb_additional_fields(nameid, it, i - 1, filename);
 		count++;
 
 		if( duplicate[nameid] ) {
@@ -2003,11 +2033,7 @@ void itemdb_read(bool minimal) {
 	
 	if (map->db_use_sql_item_db) {
 		const char* item_db_name[] = {
-#ifdef RENEWAL
-			map->item_db_re_db,
-#else // not RENEWAL
 			map->item_db_db,
-#endif // RENEWAL
 			map->item_db2_db
 		};
 		for(i = 0; i < ARRAYLENGTH(item_db_name); i++)
@@ -2050,6 +2076,14 @@ struct item_combo * itemdb_id2combo( unsigned short id ) {
 	return itemdb->combos[id];
 }
 
+/**
+ * check is item have usable type
+ **/
+bool itemdb_is_item_usable(struct item_data *item)
+{
+	return item->type == IT_HEALING || item->type == IT_USABLE || item->type == IT_CASH;
+}
+
 /*==========================================
  * Initialize / Finalize
  *------------------------------------------*/
@@ -2068,6 +2102,17 @@ void destroy_item_data(struct item_data* self, int free_self)
 		script->free_code(self->unequip_script);
 	if( self->combos )
 		aFree(self->combos);
+	if (self->hdata)
+	{
+		int i;
+		for (i = 0; i < self->hdatac; i++ ) {
+			if (self->hdata[i]->flag.free ) {
+				aFree(self->hdata[i]->data);
+			}
+			aFree(self->hdata[i]);
+		}
+		aFree(self->hdata);
+	}
 #if defined(DEBUG)
 	// trash item
 	memset(self, 0xDD, sizeof(struct item_data));
@@ -2097,56 +2142,58 @@ void itemdb_clear(bool total) {
 			itemdb->destroy_item_data(itemdb->array[i], 1);
 	}
 	
-	for( i = 0; i < itemdb->group_count; i++ ) {
-		if( itemdb->groups[i].nameid )
-			aFree(itemdb->groups[i].nameid);
-	}
-	
 	if( itemdb->groups )
+	{
+		for( i = 0; i < itemdb->group_count; i++ ) {
+			if( itemdb->groups[i].nameid )
+				aFree(itemdb->groups[i].nameid);
+		}
 		aFree(itemdb->groups);
-	
+	}
+
 	itemdb->groups = NULL;
 	itemdb->group_count = 0;
 	
-	for( i = 0; i < itemdb->chain_count; i++ ) {
-		if( itemdb->chains[i].items )
-			aFree(itemdb->chains[i].items);
-	}
-	
-	if( itemdb->chains )
+	if (itemdb->chains) {
+		for (i = 0; i < itemdb->chain_count; i++) {
+			if (itemdb->chains[i].items)
+				aFree(itemdb->chains[i].items);
+		}
 		aFree(itemdb->chains);
-	
+	}
+
 	itemdb->chains = NULL;
 	itemdb->chain_count = 0;
 	
-	for( i = 0; i < itemdb->package_count; i++ ) {
-		int c;
-		for( c = 0; c < itemdb->packages[i].random_qty; c++ )
-			aFree(itemdb->packages[i].random_groups[c].random_list);
-		if( itemdb->packages[i].random_groups )
-			aFree(itemdb->packages[i].random_groups);
-		if( itemdb->packages[i].must_items )
-			aFree(itemdb->packages[i].must_items);
-	}
-	
-	if( itemdb->packages )
+	if (itemdb->packages) {
+		for (i = 0; i < itemdb->package_count; i++) {
+			if (itemdb->packages[i].random_groups) {
+				int j;
+				for (j = 0; j < itemdb->packages[i].random_qty; j++)
+					aFree(itemdb->packages[i].random_groups[j].random_list);
+				aFree(itemdb->packages[i].random_groups);
+			}
+			if( itemdb->packages[i].must_items )
+				aFree(itemdb->packages[i].must_items);
+		}
 		aFree(itemdb->packages);
-	
-	itemdb->packages = NULL;
+		itemdb->packages = NULL;
+	}
 	itemdb->package_count = 0;
 	
-	for(i = 0; i < itemdb->combo_count; i++) {
-		if( itemdb->combos[i]->script ) // Check if script was loaded
-			script->free_code(itemdb->combos[i]->script);
-		aFree(itemdb->combos[i]);
-	}
-	if( itemdb->combos )
+	if (itemdb->combos) {
+		for (i = 0; i < itemdb->combo_count; i++) {
+			if (itemdb->combos[i]->script) // Check if script was loaded
+				script->free_code(itemdb->combos[i]->script);
+			aFree(itemdb->combos[i]);
+		}
 		aFree(itemdb->combos);
-	
+	}
+
 	itemdb->combos = NULL;
 	itemdb->combo_count = 0;
 	
-	if( total )
+	if (total)
 		return;
 	
 	itemdb->other->clear(itemdb->other, itemdb->final_sub);
@@ -2188,7 +2235,7 @@ void itemdb_reload(void) {
 			if (k == MAX_SEARCH)
 				continue;
 			
-			if (id->mob[k].id != i)
+			if (id->mob[k].id != i && k != MAX_SEARCH - 1)
 				memmove(&id->mob[k+1], &id->mob[k], (MAX_SEARCH-k-1)*sizeof(id->mob[0]));
 			id->mob[k].chance = entry->dropitem[d].p;
 			id->mob[k].id = i;
@@ -2248,6 +2295,10 @@ void do_init_itemdb(bool minimal) {
 		return;
 
 	clif->cashshop_load();
+	
+	/** it failed? we disable it **/
+	if( !clif->parse_roulette_db() )
+		battle_config.feature_roulette = 0;
 }
 void itemdb_defaults(void) {
 	itemdb = &itemdb_s;
@@ -2319,6 +2370,7 @@ void itemdb_defaults(void) {
 	itemdb->read_combos = itemdb_read_combos;
 	itemdb->gendercheck = itemdb_gendercheck;
 	itemdb->validate_entry = itemdb_validate_entry;
+	itemdb->readdb_additional_fields = itemdb_readdb_additional_fields;
 	itemdb->readdb_sql_sub = itemdb_readdb_sql_sub;
 	itemdb->readdb_libconfig_sub = itemdb_readdb_libconfig_sub;
 	itemdb->readdb_libconfig = itemdb_readdb_libconfig;
@@ -2329,4 +2381,6 @@ void itemdb_defaults(void) {
 	itemdb->final_sub = itemdb_final_sub;
 	itemdb->clear = itemdb_clear;
 	itemdb->id2combo = itemdb_id2combo;
+	itemdb->is_item_usable = itemdb_is_item_usable;
+	itemdb->lookup_const = itemdb_lookup_const;
 }

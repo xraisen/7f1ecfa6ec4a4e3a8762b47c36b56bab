@@ -39,13 +39,13 @@ bool buyingstore_setup(struct map_session_data* sd, unsigned char slots)
 
 	if( map->list[sd->bl.m].flag.novending ) {
 		// custom: no vending maps
-		clif->message(sd->fd, msg_txt(276)); // "You can't open a shop on this map"
+		clif->message(sd->fd, msg_sd(sd,276)); // "You can't open a shop on this map"
 		return false;
 	}
 
 	if( map->getcell(sd->bl.m, sd->bl.x, sd->bl.y, CELL_CHKNOVENDING) ) {
 		// custom: no vending cells
-		clif->message(sd->fd, msg_txt(204)); // "You can't open a shop on this cell."
+		clif->message(sd->fd, msg_sd(sd,204)); // "You can't open a shop on this cell."
 		return false;
 	}
 
@@ -65,10 +65,9 @@ bool buyingstore_setup(struct map_session_data* sd, unsigned char slots)
 void buyingstore_create(struct map_session_data* sd, int zenylimit, unsigned char result, const char* storename, const uint8* itemlist, unsigned int count)
 {
 	unsigned int i, weight, listidx;
-	struct item_data* id;
 
-	if( !result || count == 0 )
-	{// canceled, or no items
+	if (!result || count == 0) {
+		// canceled, or no items
 		return;
 	}
 
@@ -82,7 +81,7 @@ void buyingstore_create(struct map_session_data* sd, int zenylimit, unsigned cha
 	if( !pc_can_give_items(sd) )
 	{// custom: GM is not allowed to buy (give zeny)
 		sd->buyingstore.slots = 0;
-		clif->message(sd->fd, msg_txt(246));
+		clif->message(sd->fd, msg_sd(sd,246));
 		clif->buyingstore_open_failed(sd, BUYINGSTORE_CREATE, 0);
 		return;
 	}
@@ -94,23 +93,24 @@ void buyingstore_create(struct map_session_data* sd, int zenylimit, unsigned cha
 
 	if( map->list[sd->bl.m].flag.novending ) {
 		// custom: no vending maps
-		clif->message(sd->fd, msg_txt(276)); // "You can't open a shop on this map"
+		clif->message(sd->fd, msg_sd(sd,276)); // "You can't open a shop on this map"
 		return;
 	}
 
 	if( map->getcell(sd->bl.m, sd->bl.x, sd->bl.y, CELL_CHKNOVENDING) ) {
 		// custom: no vending cells
-		clif->message(sd->fd, msg_txt(204)); // "You can't open a shop on this cell."
+		clif->message(sd->fd, msg_sd(sd,204)); // "You can't open a shop on this cell."
 		return;
 	}
 
 	weight = sd->weight;
 
 	// check item list
-	for( i = 0; i < count; i++ )
-	{// itemlist: <name id>.W <amount>.W <price>.L
+	for (i = 0; i < count; i++) {
+		// itemlist: <name id>.W <amount>.W <price>.L
 		unsigned short nameid, amount;
 		int price, idx;
+		struct item_data* id;
 
 		nameid = RBUFW(itemlist,i*8+0);
 		amount = RBUFW(itemlist,i*8+2);
@@ -169,7 +169,7 @@ void buyingstore_create(struct map_session_data* sd, int zenylimit, unsigned cha
 
 	// success
 	sd->state.buyingstore = true;
-	sd->buyer_id = buyingstore_getuid();
+	sd->buyer_id = buyingstore->getuid();
 	sd->buyingstore.zenylimit = zenylimit;
 	sd->buyingstore.slots = i;  // store actual amount of items
 	safestrncpy(sd->message, storename, sizeof(sd->message));
@@ -203,7 +203,7 @@ void buyingstore_open(struct map_session_data* sd, int account_id)
 
 	if( !pc_can_give_items(sd) )
 	{// custom: GM is not allowed to sell
-		clif->message(sd->fd, msg_txt(246));
+		clif->message(sd->fd, msg_sd(sd,246));
 		return;
 	}
 
@@ -241,7 +241,7 @@ void buyingstore_trade(struct map_session_data* sd, int account_id, unsigned int
 
 	if( !pc_can_give_items(sd) )
 	{// custom: GM is not allowed to sell
-		clif->message(sd->fd, msg_txt(246));
+		clif->message(sd->fd, msg_sd(sd,246));
 		clif->buyingstore_trade_failed_seller(sd, BUYINGSTORE_TRADE_SELLER_FAILED, 0);
 		return;
 	}
@@ -294,8 +294,11 @@ void buyingstore_trade(struct map_session_data* sd, int account_id, unsigned int
 			return;
 		}
 
-		if( sd->status.inventory[index].expire_time || (sd->status.inventory[index].bound && !pc_can_give_bound_items(sd)) || !itemdb_cantrade(&sd->status.inventory[index], pc_get_group_level(sd), pc_get_group_level(pl_sd)) || memcmp(sd->status.inventory[index].card, buyingstore->blankslots, sizeof(buyingstore->blankslots)) )
- 		{// non-tradable item
+		if (sd->status.inventory[index].expire_time || (sd->status.inventory[index].bound && !pc_can_give_bound_items(sd))
+		 || !itemdb_cantrade(&sd->status.inventory[index], pc_get_group_level(sd), pc_get_group_level(pl_sd))
+		 || memcmp(sd->status.inventory[index].card, buyingstore->blankslots, sizeof(buyingstore->blankslots))
+		) {
+			// non-tradable item
 			clif->buyingstore_trade_failed_seller(sd, BUYINGSTORE_TRADE_SELLER_FAILED, nameid);
 			return;
 		}
@@ -367,7 +370,7 @@ void buyingstore_trade(struct map_session_data* sd, int account_id, unsigned int
 		chrif->save(sd, 0);
 		chrif->save(pl_sd, 0);
 	}
-	
+
 	// check whether or not there is still something to buy
 	ARR_FIND( 0, pl_sd->buyingstore.slots, i, pl_sd->buyingstore.items[i].amount != 0 );
 	if( i == pl_sd->buyingstore.slots )
@@ -384,7 +387,7 @@ void buyingstore_trade(struct map_session_data* sd, int account_id, unsigned int
 	}
 
 	// cannot continue buying
-	buyingstore_close(pl_sd);
+	buyingstore->close(pl_sd);
 
 	// remove auto-trader
 	if( pl_sd->state.autotrade ) {
@@ -459,7 +462,7 @@ bool buyingstore_searchall(struct map_session_data* sd, const struct s_search_st
 }
 void buyingstore_defaults(void) {
 	buyingstore = &buyingstore_s;
-	
+
 	buyingstore->nextid = 0;
 	memset(buyingstore->blankslots,0,sizeof(buyingstore->blankslots));
 	/* */

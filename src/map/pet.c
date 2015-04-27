@@ -120,7 +120,7 @@ int pet_attackskill(struct pet_data *pd, int target_id) {
 		if (inf & INF_GROUND_SKILL)
 			unit->skilluse_pos(&pd->bl, bl->x, bl->y, pd->a_skill->id, pd->a_skill->lv);
 		else //Offensive self skill? Could be stuff like GX.
-			unit->skilluse_id(&pd->bl,(inf&INF_SELF_SKILL?pd->bl.id:bl->id), pd->a_skill->id, pd->a_skill->lv);
+			unit->skilluse_id(&pd->bl,(inf&INF_SELF_SKILL) ? pd->bl.id : bl->id, pd->a_skill->id, pd->a_skill->lv);
 		return 1; //Skill invoked.
 	}
 	return 0;
@@ -510,7 +510,7 @@ int pet_catch_process2(struct map_session_data* sd, int target_id) {
 	if (sd->catch_target_class == 0 && !(md->status.mode&MD_BOSS))
 		sd->catch_target_class = md->class_;
 	if(i < 0 || sd->catch_target_class != md->class_) {
-		clif->emotion(&md->bl, E_AG);	//mob will do /ag if wrong lure is used on them.
+		clif->emotion(&md->bl, E_AG); //mob will do /ag if wrong lure is used on them.
 		clif->pet_roulette(sd,0);
 		sd->catch_target_class = -1;
 		return 1;
@@ -602,7 +602,7 @@ int pet_menu(struct map_session_data *sd,int menunum)
 	egg_id = itemdb->exists(sd->pd->petDB->EggID);
 	if (egg_id) {
 		if ((egg_id->flag.trade_restriction&ITR_NODROP) && !pc->inventoryblank(sd)) {
-			clif->message(sd->fd, msg_txt(451)); // You can't return your pet because your inventory is full.
+			clif->message(sd->fd, msg_sd(sd,451)); // You can't return your pet because your inventory is full.
 			return 1;
 		}
 	}
@@ -653,7 +653,7 @@ int pet_change_name_ack(struct map_session_data *sd, char* name, int flag)
 	normalize_name(name," ");//bugreport:3032
 
 	if ( !flag || !strlen(name) ) {
-		clif->message(sd->fd, msg_txt(280)); // You cannot use this name for your pet.
+		clif->message(sd->fd, msg_sd(sd,280)); // You cannot use this name for your pet.
 		clif->send_petstatus(sd); //Send status so client knows oet name change got rejected.
 		return 0;
 	}
@@ -688,10 +688,7 @@ int pet_equipitem(struct map_session_data *sd,int index) {
 		//Skotlex: start support timers if need
 		int64 tick = timer->gettick();
 		if (pd->s_skill && pd->s_skill->timer == INVALID_TIMER) {
-			if (pd->s_skill->id)
-				pd->s_skill->timer=timer->add(tick+pd->s_skill->delay*1000, pet->skill_support_timer, sd->bl.id, 0);
-			else
-				pd->s_skill->timer=timer->add(tick+pd->s_skill->delay*1000, pet->heal_timer, sd->bl.id, 0);
+			pd->s_skill->timer=timer->add(tick+pd->s_skill->delay*1000, pet->skill_support_timer, sd->bl.id, 0);
 		}
 		if (pd->bonus && pd->bonus->timer == INVALID_TIMER)
 			pd->bonus->timer=timer->add(tick+pd->bonus->delay*1000, pet->skill_bonus_timer, sd->bl.id, 0);
@@ -725,12 +722,8 @@ int pet_unequipitem(struct map_session_data *sd, struct pet_data *pd) {
 			pd->state.skillbonus = 0;
 			status_calc_pc(sd,SCO_NONE);
 		}
-		if( pd->s_skill && pd->s_skill->timer != INVALID_TIMER )
-		{
-			if( pd->s_skill->id )
-				timer->delete(pd->s_skill->timer, pet->skill_support_timer);
-			else
-				timer->delete(pd->s_skill->timer, pet->heal_timer);
+		if (pd->s_skill && pd->s_skill->timer != INVALID_TIMER) {
+			timer->delete(pd->s_skill->timer, pet->skill_support_timer);
 			pd->s_skill->timer = INVALID_TIMER;
 		}
 		if( pd->bonus && pd->bonus->timer != INVALID_TIMER )
@@ -793,14 +786,15 @@ int pet_randomwalk(struct pet_data *pd, int64 tick) {
 
 	Assert((pd->msd == 0) || (pd->msd->pd == pd));
 
-	if(DIFF_TICK(pd->next_walktime,tick) < 0 && unit->can_move(&pd->bl)) {
+	if (DIFF_TICK(pd->next_walktime,tick) < 0 && unit->can_move(&pd->bl)) {
 		const int retrycount=20;
-		int i,x,y,c,d=12-pd->move_fail_count;
-		if(d<5) d=5;
-		for(i=0;i<retrycount;i++){
+		int i,c,d=12-pd->move_fail_count;
+		if (d < 5)
+			d=5;
+		for (i = 0; i < retrycount; i++) {
 			int r=rnd();
-			x=pd->bl.x+r%(d*2+1)-d;
-			y=pd->bl.y+r/(d*2+1)%(d*2+1)-d;
+			int x=pd->bl.x+r%(d*2+1)-d;
+			int y=pd->bl.y+r/(d*2+1)%(d*2+1)-d;
 			if(map->getcell(pd->bl.m,x,y,CELL_CHKPASS) && unit->walktoxy(&pd->bl,x,y,0)) {
 				pd->move_fail_count=0;
 				break;
@@ -821,7 +815,7 @@ int pet_randomwalk(struct pet_data *pd, int64 tick) {
 			else
 				c+=pd->status.speed;
 		}
-		pd->next_walktime = tick+rnd()%3000+3000+c;
+		pd->next_walktime = tick+rnd()%1000+MIN_RANDOMWALKTIME+c;
 
 		return 1;
 	}
@@ -911,17 +905,18 @@ int pet_ai_sub_hard(struct pet_data *pd, struct map_session_data *sd, int64 tick
 
 	if (target->type != BL_ITEM)
 	{ //enemy targetted
-		if(!battle->check_range(&pd->bl,target,pd->status.rhw.range))
-		{	//Chase
+		if(!battle->check_range(&pd->bl,target,pd->status.rhw.range)) {
+			//Chase
 			if(!unit->walktobl(&pd->bl, target, pd->status.rhw.range, 2))
 				pet->unlocktarget(pd); //Unreachable target.
 			return 0;
 		}
 		//Continuous attack.
 		unit->attack(&pd->bl, pd->target_id, 1);
-	} else {	//Item Targeted, attempt loot
-		if (!check_distance_bl(&pd->bl, target, 1))
-		{	//Out of range
+	} else {
+		//Item Targeted, attempt loot
+		if (!check_distance_bl(&pd->bl, target, 1)) {
+			//Out of range
 			if(!unit->walktobl(&pd->bl, target, 1, 1)) //Unreachable target.
 				pet->unlocktarget(pd);
 			return 0;
@@ -982,10 +977,11 @@ int pet_ai_sub_hard_lootsearch(struct block_list *bl,va_list ap)
 
 int pet_delay_item_drop(int tid, int64 tick, int id, intptr_t data) {
 	struct item_drop_list *list;
-	struct item_drop *ditem, *ditem_prev;
+	struct item_drop *ditem;
 	list=(struct item_drop_list *)data;
 	ditem = list->item;
 	while (ditem) {
+		struct item_drop *ditem_prev;
 		map->addflooritem(&ditem->item_data,ditem->item_data.amount,
 			list->m,list->x,list->y,
 			list->first_charid,list->second_charid,list->third_charid,0);
@@ -1002,7 +998,6 @@ int pet_lootitem_drop(struct pet_data *pd,struct map_session_data *sd)
 	int i,flag=0;
 	struct item_drop_list *dlist;
 	struct item_drop *ditem;
-	struct item *it;
 	if(!pd || !pd->loot || !pd->loot->count)
 		return 0;
 	dlist = ers_alloc(pet->item_drop_list_ers, struct item_drop_list);
@@ -1014,18 +1009,17 @@ int pet_lootitem_drop(struct pet_data *pd,struct map_session_data *sd)
 	dlist->third_charid = 0;
 	dlist->item = NULL;
 
-	for(i=0;i<pd->loot->count;i++) {
-		it = &pd->loot->item[i];
-		if(sd){
-			if((flag = pc->additem(sd,it,it->amount,LOG_TYPE_PICKDROP_PLAYER))){
+	for (i = 0; i < pd->loot->count; i++) {
+		struct item *it = &pd->loot->item[i];
+		if (sd) {
+			if ((flag = pc->additem(sd,it,it->amount,LOG_TYPE_PICKDROP_PLAYER))) {
 				clif->additem(sd,0,0,flag);
 				ditem = ers_alloc(pet->item_drop_ers, struct item_drop);
 				memcpy(&ditem->item_data, it, sizeof(struct item));
 				ditem->next = dlist->item;
 				dlist->item = ditem;
 			}
-		}
-		else {
+		} else {
 			ditem = ers_alloc(pet->item_drop_ers, struct item_drop);
 			memcpy(&ditem->item_data, it, sizeof(struct item));
 			ditem->next = dlist->item;
@@ -1036,7 +1030,7 @@ int pet_lootitem_drop(struct pet_data *pd,struct map_session_data *sd)
 	memset(pd->loot->item,0,pd->loot->max * sizeof(struct item));
 	pd->loot->count = 0;
 	pd->loot->weight = 0;
-	pd->ud.canact_tick = timer->gettick()+10000;	//prevent picked up during 10*1000ms
+	pd->ud.canact_tick = timer->gettick()+10000; //prevent picked up during 10*1000ms
 
 	if (dlist->item)
 		timer->add(timer->gettick()+540,pet->delay_item_drop,0,(intptr_t)dlist);
@@ -1103,8 +1097,8 @@ int pet_recovery_timer(int tid, int64 tick, int id, intptr_t data) {
 		return 0;
 	}
 
-	if(sd->sc.data[pd->recovery->type])
-	{	//Display a heal animation?
+	if (sd->sc.data[pd->recovery->type]) {
+		//Display a heal animation?
 		//Detoxify is chosen for now.
 		clif->skill_nodamage(&pd->bl,&sd->bl,TF_DETOXIFY,1,1);
 		status_change_end(&sd->bl, pd->recovery->type, INVALID_TIMER);
@@ -1113,40 +1107,6 @@ int pet_recovery_timer(int tid, int64 tick, int id, intptr_t data) {
 
 	pd->recovery->timer = INVALID_TIMER;
 	
-	return 0;
-}
-
-int pet_heal_timer(int tid, int64 tick, int id, intptr_t data) {
-	struct map_session_data *sd=map->id2sd(id);
-	struct status_data *st;
-	struct pet_data *pd;
-	unsigned int rate = 100;
-	
-	if(sd==NULL || sd->pd == NULL || sd->pd->s_skill == NULL)
-		return 1;
-	
-	pd=sd->pd;
-	
-	if(pd->s_skill->timer != tid) {
-		ShowError("pet_heal_timer %d != %d\n",pd->s_skill->timer,tid);
-		return 0;
-	}
-	
-	st = status->get_status_data(&sd->bl);
-	
-	if(pc_isdead(sd) ||
-		(rate = get_percentage(st->sp, st->max_sp)) > pd->s_skill->sp ||
-		(rate = get_percentage(st->hp, st->max_hp)) > pd->s_skill->hp ||
-		(rate = (pd->ud.skilltimer != INVALID_TIMER)) //Another skill is in effect
-	) {  //Wait (how long? 1 sec for every 10% of remaining)
-		pd->s_skill->timer=timer->add(timer->gettick()+(rate>10?rate:10)*100,pet->heal_timer,sd->bl.id,0);
-		return 0;
-	}
-	pet_stop_attack(pd);
-	pet_stop_walking(pd,1);
-	clif->skill_nodamage(&pd->bl,&sd->bl,AL_HEAL,pd->s_skill->lv,1);
-	status->heal(&sd->bl, pd->s_skill->lv,0, 0);
-	pd->s_skill->timer=timer->add(tick+pd->s_skill->delay*1000,pet->heal_timer,sd->bl.id,0);
 	return 0;
 }
 
@@ -1170,8 +1130,8 @@ int pet_skill_support_timer(int tid, int64 tick, int id, intptr_t data) {
 	
 	st = status->get_status_data(&sd->bl);
 
-	if (DIFF_TICK(pd->ud.canact_tick, tick) > 0)
-	{	//Wait until the pet can act again.
+	if (DIFF_TICK(pd->ud.canact_tick, tick) > 0) {
+		//Wait until the pet can act again.
 		pd->s_skill->timer=timer->add(pd->ud.canact_tick,pet->skill_support_timer,sd->bl.id,0);
 		return 0;
 	}
@@ -1203,7 +1163,6 @@ int pet_skill_support_timer(int tid, int64 tick, int id, intptr_t data) {
 int read_petdb()
 {
 	char* filename[] = {"pet_db.txt","pet_db2.txt"};
-	FILE *fp;
 	int nameid,i,j,k;
 
 	// Remove any previous scripts in case reloaddb was invoked.
@@ -1217,7 +1176,7 @@ int read_petdb()
 		if( pet->db[j].equip_script )
 		{
 			script->free_code(pet->db[j].equip_script);
-			pet->db[j].pet_script = NULL;
+			pet->db[j].equip_script = NULL;
 		}
 	}
 
@@ -1228,6 +1187,7 @@ int read_petdb()
 	for( i = 0; i < ARRAYLENGTH(filename); i++ ) {
 		char line[1024];
 		int lines, entries;
+		FILE *fp;
 
 		sprintf(line, "%s/%s", map->db_path, filename[i]);
 		fp=fopen(line,"r");
@@ -1360,7 +1320,6 @@ int do_init_pet(bool minimal) {
 	timer->add_func_list(pet->delay_item_drop,"pet_delay_item_drop");
 	timer->add_func_list(pet->skill_support_timer, "pet_skill_support_timer"); // [Skotlex]
 	timer->add_func_list(pet->recovery_timer,"pet_recovery_timer"); // [Valaris]
-	timer->add_func_list(pet->heal_timer,"pet_heal_timer"); // [Valaris]
 	timer->add_interval(timer->gettick()+MIN_PETTHINKTIME,pet->ai_hard,0,0,MIN_PETTHINKTIME);
 
 	return 0;
@@ -1432,7 +1391,6 @@ void pet_defaults(void) {
 	pet->lootitem_drop = pet_lootitem_drop;
 	pet->skill_bonus_timer = pet_skill_bonus_timer;
 	pet->recovery_timer = pet_recovery_timer;
-	pet->heal_timer = pet_heal_timer;
 	pet->skill_support_timer = pet_skill_support_timer;
 	pet->read_db = read_petdb;
 }

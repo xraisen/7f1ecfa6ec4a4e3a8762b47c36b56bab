@@ -16,6 +16,7 @@ typedef enum RATHREAD_PRIO {
 } RATHREAD_PRIO;
 
 
+#ifdef HERCULES_CORE
 /**
  * Creates a new Thread
  *
@@ -104,15 +105,13 @@ RATHREAD_PRIO rathread_prio_get(rAthread *handle);
  * Tells the OS scheduler to yield the execution of the calling thread
  *
  * @note: this will not "pause" the thread,
- *			it just allows the OS to spent the remaining time
- *			of the slice to another thread.
+ *        it just allows the OS to spend the remaining time
+ *        of the slice to another thread.
  */
 void rathread_yield(void);
 
-
-
 void rathread_init(void);
 void rathread_final(void);
-
+#endif // HERCULES_CORE
 
 #endif /* COMMON_THREAD_H */

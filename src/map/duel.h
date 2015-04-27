@@ -37,13 +37,15 @@ struct duel_interface {
 	void (*leave) (const unsigned int did, struct map_session_data* sd);
 	void (*showinfo) (const unsigned int did, struct map_session_data* sd);
 	int (*checktime) (struct map_session_data* sd);
-	
+
 	void (*init) (bool minimal);
 	void (*final) (void);
-} duel_s;
+};
 
 struct duel_interface *duel;
 
+#ifdef HERCULES_CORE
 void duel_defaults(void);
+#endif // HERCULES_CORE
 
 #endif /* MAP_DUEL_H */

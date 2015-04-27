@@ -19,6 +19,7 @@
 	#define plugin_open(x)        LoadLibraryA(x)
 	#define plugin_import(x,y,z)  (z)GetProcAddress((x),(y))
 	#define plugin_close(x)       FreeLibrary(x)
+	#define plugin_geterror(buf)  (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), 0, buf, sizeof(buf), NULL) ? buf : "Unknown error")
 
 	#define DLL_EXT               ".dll"
 	#define DLL                   HINSTANCE
@@ -31,6 +32,7 @@
 	#endif // RTLD_DEEPBIND
 	#define plugin_import(x,y,z)   (z)dlsym((x),(y))
 	#define plugin_close(x)        dlclose(x)
+	#define plugin_geterror(buf)   ((void)buf, dlerror())
 
 	#if defined CYGWIN
 		#define DLL_EXT        ".dll"
@@ -80,14 +82,6 @@ struct HPMFileNameCache {
 	char *name;
 };
 
-struct HPMArgData {
-	unsigned int pluginID;
-	char *name;/* e.g. "--my-arg","-v","--whatever" */
-	void (*help) (void);/* to display when --help is used */
-	void (*func) (char *param);/* NULL when no param is available */
-	bool has_param;/* because of the weird "--arg<space>param" instead of the "--arg=param" */
-};
-
 struct HPDataOperationStorage {
 	void **HPDataSRCPtr;
 	unsigned int *hdatac;
@@ -121,8 +115,9 @@ struct HPM_interface {
 	/* config listen */
 	struct HPConfListenStorage *confs[HPCT_MAX];
 	unsigned int confsc[HPCT_MAX];
-	/* --command-line */
-	DBMap *arg_db;
+	/** Plugins requested through the command line */
+	char **cmdline_plugins;
+	int cmdline_plugins_count;
 	/* funcs */
 	void (*init) (void);
 	void (*final) (void);
@@ -135,24 +130,25 @@ struct HPM_interface {
 	void *(*import_symbol) (char *name, unsigned int pID);
 	void (*share) (void *, char *);
 	void (*symbol_defaults) (void);
-	void (*config_read) (const char * const *extra_plugins, int extra_plugins_count);
+	void (*config_read) (void);
 	bool (*populate) (struct hplugin *plugin,const char *filename);
 	void (*symbol_defaults_sub) (void);//TODO drop
 	char *(*pid2name) (unsigned int pid);
 	unsigned char (*parse_packets) (int fd, enum HPluginPacketHookingPoints point);
 	void (*load_sub) (struct hplugin *plugin);
 	bool (*addhook_sub) (enum HPluginHookType type, const char *target, void *hook, unsigned int pID);
-	bool (*parse_arg) (const char *arg, int* index, char *argv[], bool param);
-	void (*arg_help) (void);
-	int (*arg_db_clear_sub) (DBKey key, DBData *data, va_list args);
 	void (*grabHPData) (struct HPDataOperationStorage *ret, enum HPluginDataTypes type, void *ptr);
 	/* for server-specific HPData e.g. map_session_data */
 	bool (*grabHPDataSub) (struct HPDataOperationStorage *ret, enum HPluginDataTypes type, void *ptr);
 	/* for custom config parsing */
 	bool (*parseConf) (const char *w1, const char *w2, enum HPluginConfType point);
 	/* validates plugin data */
-	bool (*DataCheck) (struct s_HPMDataCheck *src, unsigned int size, char *name);
-} HPM_s;
+	bool (*DataCheck) (struct s_HPMDataCheck *src, unsigned int size, int version, char *name);
+	void (*datacheck_init) (const struct s_HPMDataCheck *src, unsigned int length, int version);
+	void (*datacheck_final) (void);
+};
+
+CMDLINEARG(loadplugin);
 
 struct HPM_interface *HPM;
 

@@ -73,14 +73,14 @@
 #define HOTKEY_SAVING
 
 #if PACKETVER < 20090603
-        // (27 = 9 skills x 3 bars)               (0x02b9,191)
-        #define MAX_HOTKEYS 27
+	// (27 = 9 skills x 3 bars)               (0x02b9,191)
+	#define MAX_HOTKEYS 27
 #elif PACKETVER < 20090617
-        // (36 = 9 skills x 4 bars)               (0x07d9,254)
-        #define MAX_HOTKEYS 36
+	// (36 = 9 skills x 4 bars)               (0x07d9,254)
+	#define MAX_HOTKEYS 36
 #else // >= 20090617
-        // (38 = 9 skills x 4 bars & 2 Quickslots)(0x07d9,268)
-        #define MAX_HOTKEYS 38
+	// (38 = 9 skills x 4 bars & 2 Quickslots)(0x07d9,268)
+	#define MAX_HOTKEYS 38
 #endif // 20090603
 #endif // 20070227
 
@@ -103,7 +103,7 @@
 #define MAX_ZENY 1000000000
 
 //Official Limit: 2.1b ( the var that stores the money doesn't go much higher than this by default )
-#define MAX_BANK_ZENY 2100000000
+#define MAX_BANK_ZENY INT_MAX
 
 #define MAX_LEVEL 175
 #define MAX_FAME 1000000000
@@ -376,6 +376,14 @@ struct s_homunculus { //[orn]
 	int int_;
 	int dex;
 	int luk;
+
+	int str_value;
+	int agi_value;
+	int vit_value;
+	int int_value;
+	int dex_value;
+	int luk_value;
+
 	int8 spiritball; //for homun S [lighta]
 };
 
@@ -469,7 +477,7 @@ struct mmo_charstatus {
 
 	/* `account_data` modifiers */
 	unsigned short mod_exp,mod_drop,mod_death;
-	
+
 	unsigned char font;
 
 	uint32 uniqueitem_counter;
@@ -577,7 +585,7 @@ struct guild_skill {
 	int id,lv;
 };
 
-struct hChSysCh;
+struct channel_data;
 struct guild {
 	int guild_id;
 	short guild_lv, connect_member, max_member, average_lv;
@@ -593,15 +601,15 @@ struct guild {
 	struct guild_alliance alliance[MAX_GUILDALLIANCE];
 	struct guild_expulsion expulsion[MAX_GUILDEXPULSION];
 	struct guild_skill skill[MAX_GUILDSKILL];
-	
+
 	/* used on char.c to state what kind of data is being saved/processed */
 	unsigned short save_flag;
-	
+
 	short *instance;
 	unsigned short instances;
-	
-	struct hChSysCh *channel;
-	
+
+	struct channel_data *channel;
+
 	/* HPM Custom Struct */
 	struct HPluginData **hdata;
 	unsigned int hdatac;

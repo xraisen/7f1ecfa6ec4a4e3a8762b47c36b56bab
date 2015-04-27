@@ -35,6 +35,10 @@ enum e_pc_permission {
 	PC_PERM_DISABLE_CMD_DEAD    = 0x100000,
 	PC_PERM_HCHSYS_ADMIN        = 0x200000,
 	PC_PERM_TRADE_BOUND         = 0x400000,
+	PC_PERM_DISABLE_PICK_UP     = 0x800000,
+	PC_PERM_DISABLE_STORE       = 0x1000000,
+	PC_PERM_DISABLE_EXP         = 0x2000000,
+	PC_PERM_DISABLE_SKILL_USAGE = 0x4000000,
 };
 
 // Cached config settings for quick lookup
@@ -94,6 +98,8 @@ struct pc_groups_interface {
 
 struct pc_groups_interface *pcg;
 
+#ifdef HERCULES_CORE
 void pc_groups_defaults(void);
+#endif // HERCULES_CORE
 
 #endif /* MAP_PC_GROUPS_H */

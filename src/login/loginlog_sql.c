@@ -11,6 +11,7 @@
 
 #include "../common/cbasetypes.h"
 #include "../common/mmo.h"
+#include "../common/nullpo.h"
 #include "../common/socket.h"
 #include "../common/sql.h"
 #include "../common/strlib.h"
@@ -19,14 +20,14 @@
 static char   global_db_hostname[32] = "127.0.0.1";
 static uint16 global_db_port = 3306;
 static char   global_db_username[32] = "ragnarok";
-static char   global_db_password[32] = "ragnarok";
+static char   global_db_password[100] = "ragnarok";
 static char   global_db_database[32] = "ragnarok";
 static char   global_codepage[32] = "";
 // local sql settings
 static char   log_db_hostname[32] = "";
 static uint16 log_db_port = 0;
 static char   log_db_username[32] = "";
-static char   log_db_password[32] = "";
+static char   log_db_password[100] = "";
 static char   log_db_database[32] = "";
 static char   log_codepage[32] = "";
 static char   log_login_db[256] = "loginlog";
@@ -67,6 +68,8 @@ void login_log(uint32 ip, const char* username, int rcode, const char* message)
 	char esc_message[255*2+1];
 	int retcode;
 
+	nullpo_retv(username);
+	nullpo_retv(message);
 	if( !enabled )
 		return;
 
@@ -137,6 +140,8 @@ bool loginlog_config_read(const char* key, const char* value)
 {
 	const char* signature;
 
+	nullpo_ret(key);
+	nullpo_ret(value);
 	signature = "sql.";
 	if( strncmpi(key, signature, strlen(signature)) == 0 )
 	{

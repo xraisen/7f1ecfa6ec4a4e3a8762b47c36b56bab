@@ -97,7 +97,7 @@ struct socket_data {
 	ParseFunc func_parse;
 
 	void* session_data; // stores application-specific data related to the session
-	
+
 	struct HPluginData **hdata;
 	unsigned int hdatac;
 };
@@ -171,7 +171,9 @@ struct socket_interface {
 
 struct socket_interface *sockt;
 
+#ifdef HERCULES_CORE
 void socket_defaults(void);
+#endif // HERCULES_CORE
 
 /* the purpose of these macros is simply to not make calling them be an annoyance */
 #ifndef H_SOCKET_C

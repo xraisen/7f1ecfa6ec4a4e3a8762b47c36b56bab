@@ -59,33 +59,30 @@
 
 ////////////////////////////////////////////////
 
-//void malloc_memory_check(void);
-//bool malloc_verify_ptr(void* ptr);
-//size_t malloc_usage (void);
-//void malloc_init (void);
-//void malloc_final (void);
-
+#ifdef HERCULES_CORE
 void malloc_defaults(void);
 
+void memmgr_report(int extra);
+#endif // HERCULES_CORE
+
 struct malloc_interface {
-	void	(*init) (void);
-	void	(*final) (void);
+	void (*init) (void);
+	void (*final) (void);
 	/* */
-	void* (*malloc	)(size_t size, const char *file, int line, const char *func);
-	void* (*calloc	)(size_t num, size_t size, const char *file, int line, const char *func);
-	void* (*realloc	)(void *p, size_t size, const char *file, int line, const char *func);
+	void* (*malloc)(size_t size, const char *file, int line, const char *func);
+	void* (*calloc)(size_t num, size_t size, const char *file, int line, const char *func);
+	void* (*realloc)(void *p, size_t size, const char *file, int line, const char *func);
 	void* (*reallocz)(void *p, size_t size, const char *file, int line, const char *func);
-	char* (*astrdup	)(const char *p, const char *file, int line, const char *func);
-	void  (*free	)(void *p, const char *file, int line, const char *func);
+	char* (*astrdup)(const char *p, const char *file, int line, const char *func);
+	void  (*free)(void *p, const char *file, int line, const char *func);
 	/* */
-	void	(*memory_check)(void);
-	bool	(*verify_ptr)(void* ptr);
-	size_t	(*usage) (void);
+	void (*memory_check)(void);
+	bool (*verify_ptr)(void* ptr);
+	size_t (*usage) (void);
 	/* */
 	void (*post_shutdown) (void);
+	void (*init_messages) (void);
 };
-
-void memmgr_report (int extra);
 
 struct malloc_interface *iMalloc;
 #endif /* COMMON_MALLOC_H */

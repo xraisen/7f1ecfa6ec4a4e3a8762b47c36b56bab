@@ -78,39 +78,39 @@ enum homun_type homunculus_class2type(int class_) {
 }
 
 void homunculus_addspiritball(struct homun_data *hd, int max) {
-    nullpo_retv(hd);
+	nullpo_retv(hd);
 
-    if (max > MAX_SKILL_LEVEL)
-        max = MAX_SKILL_LEVEL;
-    if (hd->homunculus.spiritball < 0)
-        hd->homunculus.spiritball = 0;
+	if (max > MAX_SKILL_LEVEL)
+		max = MAX_SKILL_LEVEL;
+	if (hd->homunculus.spiritball < 0)
+		hd->homunculus.spiritball = 0;
 
-    if (hd->homunculus.spiritball && hd->homunculus.spiritball >= max) {
-        hd->homunculus.spiritball = max;
-    }
-    else
-        hd->homunculus.spiritball++;
+	if (hd->homunculus.spiritball && hd->homunculus.spiritball >= max) {
+		hd->homunculus.spiritball = max;
+	}
+	else
+		hd->homunculus.spiritball++;
 
-    clif->spiritball(&hd->bl);
+	clif->spiritball(&hd->bl);
 }
 
 void homunculus_delspiritball(struct homun_data *hd, int count, int type) {
-    nullpo_retv(hd);
+	nullpo_retv(hd);
 
-    if (hd->homunculus.spiritball <= 0) {
-        hd->homunculus.spiritball = 0;
-        return;
-    }
-    if (count <= 0)
-        return;
-    if (count > MAX_SKILL_LEVEL)
-        count = MAX_SKILL_LEVEL;
-    if (count > hd->homunculus.spiritball)
-        count = hd->homunculus.spiritball;
+	if (hd->homunculus.spiritball <= 0) {
+		hd->homunculus.spiritball = 0;
+		return;
+	}
+	if (count <= 0)
+		return;
+	if (count > MAX_SKILL_LEVEL)
+		count = MAX_SKILL_LEVEL;
+	if (count > hd->homunculus.spiritball)
+		count = hd->homunculus.spiritball;
 
-    hd->homunculus.spiritball -= count;
-    if (!type)
-        clif->spiritball(&hd->bl);
+	hd->homunculus.spiritball -= count;
+	if (!type)
+		clif->spiritball(&hd->bl);
 }
 
 void homunculus_damaged(struct homun_data *hd) {
@@ -313,7 +313,7 @@ bool homunculus_levelup(struct homun_data *hd) {
 	hom = &hd->homunculus;
 	hom->level++ ;
 	if (!(hom->level % 3))
-		hom->skillpts++;	//1 skillpoint each 3 base level
+		hom->skillpts++; //1 skillpoint each 3 base level
 
 	hom->exp -= hd->exp_next;
 	hd->exp_next = homun->exptable[hom->level - 1];
@@ -346,6 +346,8 @@ bool homunculus_levelup(struct homun_data *hd) {
 	hom->dex += growth_dex;
 	hom->int_+= growth_int;
 	hom->luk += growth_luk;
+
+	APPLY_HOMUN_LEVEL_STATWEIGHT();
 
 	if ( battle_config.homunculus_show_growth ) {
 		char output[256] ;
@@ -500,7 +502,7 @@ int homunculus_gainexp(struct homun_data *hd,unsigned int exp) {
 		return 0;
 	}
 
- 	//levelup
+	//levelup
 	while( hd->homunculus.exp > hd->exp_next && homun->levelup(hd) );
 
 	if( hd->exp_next == 0 )
@@ -601,7 +603,7 @@ bool homunculus_feed(struct map_session_data *sd, struct homun_data *hd) {
 		emotion = E_HO;
 	}
 
-	hd->homunculus.hunger += 10;	//dunno increase value for each food
+	hd->homunculus.hunger += 10; //dunno increase value for each food
 	if(hd->homunculus.hunger > 100)
 		hd->homunculus.hunger = 100;
 
@@ -687,7 +689,7 @@ bool homunculus_change_name_ack(struct map_session_data *sd, char* name, int fla
 	normalize_name(name," ");//bugreport:3032
 
 	if ( !flag || !strlen(name) ) {
-		clif->message(sd->fd, msg_txt(280)); // You cannot use this name
+		clif->message(sd->fd, msg_sd(sd,280)); // You cannot use this name
 		return false;
 	}
 	safestrncpy(hd->homunculus.name,name,NAME_LENGTH);
@@ -912,7 +914,7 @@ bool homunculus_ressurect(struct map_session_data* sd, unsigned char per, short 
 
 	hd = sd->hd;
 
-  	if (hd->homunculus.vaporize != HOM_ST_ACTIVE)
+	if (hd->homunculus.vaporize != HOM_ST_ACTIVE)
 		return false; // vaporized homunculi need to be 'called'
 
 	if (!status->isdead(&hd->bl))
@@ -1151,7 +1153,7 @@ bool homunculus_read_skill_db_sub(char* split[], int columns, int current) {
 	int minJobLevelPresent = 0;
 
 	if( columns == 15 )
-		minJobLevelPresent = 1;	// MinJobLvl has been added - FIXME: is this extra field even needed anymore?
+		minJobLevelPresent = 1; // MinJobLvl has been added - FIXME: is this extra field even needed anymore?
 
 	// check for bounds [celest]
 	classid = atoi(split[0]) - HM_CLASS_BASE;
@@ -1209,7 +1211,6 @@ void homunculus_skill_db_read(void) {
 }
 
 void homunculus_exp_db_read(void) {
-	FILE *fp;
 	char line[1024];
 	int i, j=0;
 	char *filename[]={
@@ -1218,6 +1219,7 @@ void homunculus_exp_db_read(void) {
 
 	memset(homun->exptable,0,sizeof(homun->exptable));
 	for(i = 0; i < 2; i++) {
+		FILE *fp;
 		sprintf(line, "%s/%s", map->db_path, filename[i]);
 		if( (fp=fopen(line,"r")) == NULL) {
 			if(i != 0)

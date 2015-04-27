@@ -49,7 +49,7 @@ void hstr(const char *str) {
 }
 int db2sql(config_setting_t *entry, int n, const char *source) {
 	struct item_data *it = NULL;
-	
+
 	if( (it = itemdb->exists(itemdb_readdb_libconfig_sub(entry,n,source))) ) {
 		char e_name[ITEM_NAME_LENGTH*2+1];
 		const char *bonus = NULL;
@@ -67,7 +67,7 @@ int db2sql(config_setting_t *entry, int n, const char *source) {
 		// name_english
 		SQL->EscapeString(NULL, e_name, it->name);
 		StrBuf->Printf(&buf, "'%s',", e_name);
-		
+
 		// name_japanese
 		SQL->EscapeString(NULL, e_name, it->jname);
 		StrBuf->Printf(&buf, "'%s',", e_name);
@@ -200,7 +200,7 @@ int db2sql(config_setting_t *entry, int n, const char *source) {
 			SQL->EscapeString(NULL, tosql.buf[0].p, str);
 		}
 		StrBuf->Printf(&buf, "'%s',", it->script?tosql.buf[0].p:"");
-		
+
 		// equip_script
 		if (it->equip_script) {
 			libconfig->setting_lookup_string(entry, "OnEquipScript", &bonus);
@@ -290,56 +290,56 @@ void do_db2sql(void) {
 		ShowInfo("db2sql: this should not be used with 'db_use_sql_item_db' enabled, skipping...\n");
 		return;
 	}
-	
+
 	/* link */
 	itemdb_readdb_libconfig_sub = itemdb->readdb_libconfig_sub;
 	itemdb->readdb_libconfig_sub = db2sql;
 	/* */
-	
+
 	if ((tosql.fp = fopen("sql-files/item_db_re.sql", "wt+")) == NULL) {
 		ShowError("itemdb_tosql: File not found \"%s\".\n", "sql-files/item_db_re.sql");
 		return;
- 	}
-	
-	tosql.db_name = map->item_db_re_db;
+	}
+
+	tosql.db_name = map->item_db_db;
 	totable();
-	
+
 	memset(&tosql.buf, 0, sizeof(tosql.buf) );
-	
+
 	itemdb->clear(false);
 	itemdb->readdb_libconfig("re/item_db.conf");
-	
+
 	fclose(tosql.fp);
-	
+
 	if ((tosql.fp = fopen("sql-files/item_db.sql", "wt+")) == NULL) {
 		ShowError("itemdb_tosql: File not found \"%s\".\n", "sql-files/item_db.sql");
 		return;
- 	}
-	
+	}
+
 	tosql.db_name = map->item_db_db;
 	totable();
-	
+
 	itemdb->clear(false);
 	itemdb->readdb_libconfig("pre-re/item_db.conf");
-	
+
 	fclose(tosql.fp);
-	
+
 	if ((tosql.fp = fopen("sql-files/item_db2.sql", "wt+")) == NULL) {
 		ShowError("itemdb_tosql: File not found \"%s\".\n", "sql-files/item_db2.sql");
 		return;
- 	}
-	
+	}
+
 	tosql.db_name = map->item_db2_db;
 	totable();
-	
+
 	itemdb->clear(false);
 	itemdb->readdb_libconfig("item_db2.conf");
-	
+
 	fclose(tosql.fp);
-	
+
 	/* unlink */
 	itemdb->readdb_libconfig_sub = itemdb_readdb_libconfig_sub;
-	
+
 	if( tosql.buf[0].p ) aFree(tosql.buf[0].p);
 	if( tosql.buf[1].p ) aFree(tosql.buf[1].p);
 	if( tosql.buf[2].p ) aFree(tosql.buf[2].p);
@@ -348,8 +348,10 @@ void do_db2sql(void) {
 CPCMD(db2sql) {
 	do_db2sql();
 }
-void db2sql_arg(char *param) {
+CMDLINEARG(db2sql)
+{
 	map->minimal = torun = true;
+	return true;
 }
 HPExport void server_preinit (void) {
 	SQL = GET_SYMBOL("SQL");
@@ -359,8 +361,8 @@ HPExport void server_preinit (void) {
 	iMalloc = GET_SYMBOL("iMalloc");
 	libconfig = GET_SYMBOL("libconfig");
 	StrBuf = GET_SYMBOL("StrBuf");
-	
-	addArg("--db2sql",false,db2sql_arg,NULL);
+
+	addArg("--db2sql",false,db2sql,NULL);
 }
 HPExport void plugin_init (void) {
 	addCPCommand("server:tools:db2sql",db2sql);

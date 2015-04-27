@@ -3,7 +3,7 @@
 //===== By: ==================================================
 //= Legionaire, Kisuka
 //===== Current Version: =====================================
-//= 1.6
+//= 1.7
 //===== Description: =========================================
 //= Ninja Job Change Quest
 //===== Additional Comments: =================================
@@ -13,6 +13,7 @@
 //= 1.4 Fixed a minor bug [SinSloth]
 //= 1.5 Updated to match AEGIS script and Added Quest Log commands. [Kisuka]
 //= 1.6 Fixed AEGIS amatsu warp typo. [Kisuka]
+//= 1.7 Kagerou/Oboro support (Class -> BaseClass) [Euphy]
 //============================================================
 
 alberta,30,65,3	script	Akagi	4_M_JOB_ASSASSIN,{
@@ -186,7 +187,7 @@ que_ng,30,65,3	script	Cougar#nq	4_M_JOB_ASSASSIN,{
 			mes "Anyway, after you give him";
 			mes "the letter, come back and";
 			mes "let me know his answer.";
-			set NINJ_Q,1;
+			NINJ_Q = 1;
 			setquest 6015;
 			close;
 		}
@@ -253,7 +254,7 @@ que_ng,30,65,3	script	Cougar#nq	4_M_JOB_ASSASSIN,{
 			mes "I should have thought about";
 			mes "that earlier! Well, it's too";
 			mes "late now. Just h-hurry it up!";
-			set NINJ_Q,4;
+			NINJ_Q = 4;
 			changequest 6017,6018;
 			close;
 		}
@@ -331,7 +332,7 @@ que_ng,30,65,3	script	Cougar#nq	4_M_JOB_ASSASSIN,{
 			mes "agile as the wind, and as";
 			mes "quiet as the falling shadows.";
 			callfunc "Job_Change",Job_Ninja;
-			set NINJ_Q,5;
+			NINJ_Q = 5;
 			delitem 7053,5; // Cyfar
 			delitem 1010,1; // Phracon
 			getitem 13010,1;	// Asura
@@ -349,7 +350,7 @@ que_ng,30,65,3	script	Cougar#nq	4_M_JOB_ASSASSIN,{
 			close;
 		}
 	} else {
-		if (Class == Job_Ninja) {
+		if (BaseClass == Job_Ninja) {
 			mes "[Cougar]";
 			mes "How have you been?";
 			mes "Train hard: you want";
@@ -430,7 +431,7 @@ einbroch,184,194,3	script	Suspicious Man#nq	4_M_SITDOWN,{
 		mes "help me find";
 		mes "^3355FF5 Cyfars^000000 and";
 		mes "^3355FF1 Phracon^000000.";
-		set NINJ_Q,2;
+		NINJ_Q = 2;
 		changequest 6015,6016;
 		close;
 	}
@@ -524,7 +525,7 @@ einbroch,184,194,3	script	Suspicious Man#nq	4_M_SITDOWN,{
 		mes "me send you there directly...";
 		delitem 1010,1;	// Phracon
 		delitem 7053,5;	// Cyfar
-		set NINJ_Q,3;
+		NINJ_Q = 3;
 		changequest 6016,6017;
 		close2;
 		warp "amatsu",113,127;
@@ -563,7 +564,7 @@ einbroch,184,194,3	script	Suspicious Man#nq	4_M_SITDOWN,{
 		mes "to beat him in a fair fight~";
 		close;
 	}
-	else if (NINJ_Q == 5 && Class == Job_Ninja) {
+	else if (NINJ_Q == 5 && BaseClass == Job_Ninja) {
 		mes "[Red Leopard Joe]";
 		mes "Oh, you're a Ninja~";
 		mes "I hope you continue to";

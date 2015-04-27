@@ -10,10 +10,7 @@
 
 #include "thread.h"
 
-#include "../common/sysinfo.h" // sysinfo->getpagesize()
 #include "../common/cbasetypes.h"
-#include "../common/malloc.h"
-#include "../common/showmsg.h"
 
 #ifdef WIN32
 #	include "../common/winapi.h"
@@ -27,6 +24,10 @@
 #	include <unistd.h>
 #endif
 
+#include "../common/malloc.h"
+#include "../common/showmsg.h"
+#include "../common/sysinfo.h" // sysinfo->getpagesize()
+
 // When Compiling using MSC (on win32..) we know we have support in any case!
 #ifdef _MSC_VER
 #define HAS_TLS
@@ -36,7 +37,7 @@
 
 struct rAthread {
 	unsigned int myID;
-	
+
 	RATHREAD_PRIO  prio;
 	rAthreadProc proc;
 	void *param;
@@ -62,7 +63,7 @@ static struct rAthread l_threads[RA_THREADS_MAX];
 void rathread_init(void) {
 	register unsigned int i;
 	memset(&l_threads, 0x00, RA_THREADS_MAX * sizeof(struct rAthread) );
-	
+
 	for(i = 0; i < RA_THREADS_MAX; i++){
 		l_threads[i].myID = i;
 	}
@@ -80,7 +81,7 @@ void rathread_init(void) {
 
 void rathread_final(void) {
 	register unsigned int i;
-	
+
 	// Unterminated Threads Left?
 	// Shouldn't happen ..
 	// Kill 'em all!
@@ -91,8 +92,7 @@ void rathread_final(void) {
 			rathread_destroy(&l_threads[i]);
 		}
 	}
-	
-	
+
 }//end: rathread_final()
 
 
@@ -112,7 +112,7 @@ static void *raThreadMainRedirector( void *p ){
 	sigset_t set; // on Posix Thread platforms
 #endif
 	void *ret;
-	
+
 	// Update myID @ TLS to right id.
 #ifdef HAS_TLS
 	g_rathread_ID = ((rAthread*)p)->myID;
@@ -123,13 +123,13 @@ static void *raThreadMainRedirector( void *p ){
 	// the threads inherits the Signal mask from the thread which spawned
 	// this thread
 	// so we've to block everything we don't care about.
-	sigemptyset(&set);
-	sigaddset(&set, SIGINT);
-	sigaddset(&set, SIGTERM);
-	sigaddset(&set, SIGPIPE);
+	(void)sigemptyset(&set);
+	(void)sigaddset(&set, SIGINT);
+	(void)sigaddset(&set, SIGTERM);
+	(void)sigaddset(&set, SIGPIPE);
 
 	pthread_sigmask(SIG_BLOCK, &set, NULL);
-		
+
 #endif
 
 
@@ -181,14 +181,12 @@ rAthread *rathread_createEx(rAthreadProc entryPoint, void *param, size_t szStack
 			break;
 		}
 	}
-	
+
 	if(handle == NULL){
 		ShowError("rAthread: cannot create new thread (entryPoint: %p) - no free thread slot found!", entryPoint);
 		return NULL;
 	}
-	
-	
-	
+
 	handle->proc = entryPoint;
 	handle->param = param;
 
@@ -197,7 +195,7 @@ rAthread *rathread_createEx(rAthreadProc entryPoint, void *param, size_t szStack
 #else
 	pthread_attr_init(&attr);
 	pthread_attr_setstacksize(&attr, szStack);
-	
+
 	if(pthread_create(&handle->hThread, &attr, raThreadMainRedirector, (void*)handle) != 0){
 		handle->proc = NULL;
 		handle->param = NULL;
@@ -207,7 +205,7 @@ rAthread *rathread_createEx(rAthreadProc entryPoint, void *param, size_t szStack
 #endif
 
 	rathread_prio_set( handle,  prio );
-	
+
 	return handle;
 }//end: rathread_createEx
 
@@ -220,10 +218,9 @@ void rathread_destroy(rAthread *handle) {
 	}
 #else
 	if( pthread_cancel( handle->hThread ) == 0){
-	
 		// We have to join it, otherwise pthread wont re-cycle its internal resources assoc. with this thread.
 		pthread_join( handle->hThread, NULL );
-		
+
 		// Tell our manager to release resources ;)
 		rat_thread_terminated(handle);
 	}
@@ -233,7 +230,7 @@ void rathread_destroy(rAthread *handle) {
 rAthread *rathread_self(void) {
 #ifdef HAS_TLS
 	rAthread *handle = &l_threads[g_rathread_ID];
-	
+
 	if(handle->proc != NULL) // entry point set, so its used!
 		return handle;
 #else
@@ -247,14 +244,13 @@ rAthread *rathread_self(void) {
 		pthread_t hSelf;
 		hSelf = pthread_self();
 	#endif
-	
+
 	for(i = 0; i < RA_THREADS_MAX; i++){
 		if(l_threads[i].hThread == hSelf  &&  l_threads[i].proc != NULL)
 			return &l_threads[i];
 	}
-	
 #endif
-		
+
 	return NULL;
 }//end: rathread_self()
 
@@ -270,14 +266,12 @@ int rathread_get_tid(void) {
 	#else
 		return (intptr_t)pthread_self();
 	#endif
-	
 #endif
-	
+
 }//end: rathread_get_tid()
 
 
 bool rathread_wait(rAthread *handle, void **out_exitCode) {
-	
 	// Hint:
 	// no thread data cleanup routine call here!
 	// its managed by the callProxy itself..

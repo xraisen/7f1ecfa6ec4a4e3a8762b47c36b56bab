@@ -12,6 +12,8 @@
 
 #include "../common/showmsg.h"
 
+struct nullpo_interface nullpo_s;
+
 /**
  * Reports failed assertions or NULL pointers
  *
@@ -24,11 +26,20 @@
 void assert_report(const char *file, int line, const char *func, const char *targetname, const char *title) {
 	if (file == NULL)
 		file = "??";
-	
+
 	if (func == NULL || *func == '\0')
 		func = "unknown";
-	
+
 	ShowError("--- %s --------------------------------------------\n", title);
 	ShowError("%s:%d: '%s' in function `%s'\n", file, line, targetname, func);
 	ShowError("--- end %s ----------------------------------------\n", title);
+}
+
+/**
+ *
+ **/
+void nullpo_defaults(void) {
+	nullpo = &nullpo_s;
+	
+	nullpo->assert_report = assert_report;
 }
